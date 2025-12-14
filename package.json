@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "build": "cd waiter-app && npm install && npm run build",
+    "start": "cd waiter-app && npm start"
+  },
   "dependencies": {
     "node-fetch": "^2.7.0",
     "react-easy-crop": "^5.5.6"
