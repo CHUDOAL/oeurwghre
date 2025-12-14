@@ -16,7 +16,7 @@ type OrderItem = {
   menu_items: {
     title: string
     price: number
-  }
+  } | null // menu_items can be null if join fails, though unlikely
 }
 
 type Order = {
@@ -113,13 +113,14 @@ export default function OrderPage() {
     const tenMinutes = 10 * 60 * 1000
     const remaining = tenMinutes - diff
 
+    const absRemaining = Math.abs(remaining)
+    const minutes = Math.floor(absRemaining / 60000)
+    const seconds = Math.floor((absRemaining % 60000) / 1000)
+    const formatted = `${remaining < 0 ? '-' : ''}${minutes}:${seconds.toString().padStart(2, '0')}`
+
     if (remaining <= 0) {
-        return { text: 'Готово', color: 'text-red-600', bg: 'bg-red-50' }
+        return { text: formatted, color: 'text-red-600', bg: 'bg-red-50' }
     }
-    
-    const minutes = Math.floor(remaining / 60000)
-    const seconds = Math.floor((remaining % 60000) / 1000)
-    const formatted = `${minutes}:${seconds.toString().padStart(2, '0')}`
     
     if (remaining < 2 * 60 * 1000) {
         return { text: formatted, color: 'text-orange-600', bg: 'bg-orange-50' }
@@ -170,7 +171,7 @@ export default function OrderPage() {
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <p className={`font-medium text-lg leading-tight ${item.served ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
-                      {item.menu_items?.title || 'Неизвестное блюдо'}
+                      {item.menu_items?.title || 'Неизвестное блюдо (удалено)'}
                     </p>
                     
                     {!item.served && (
