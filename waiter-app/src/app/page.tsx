@@ -60,10 +60,10 @@ export default function Dashboard() {
     <div className="min-h-screen pb-20 relative overflow-x-hidden">
       {/* Holographic Assistant (Fixed Bottom Right) */}
       <div className="fixed bottom-0 right-[-20px] z-0 pointer-events-none opacity-80 mix-blend-screen h-[400px] w-[300px]">
-         {/* PLACEHOLDER FOR WAIFU DASHBOARD - REPLACE src with "/waifu-dashboard.png" */}
+         {/* Holographic Assistant */}
          {/* eslint-disable-next-line @next/next/no-img-element */}
          <img 
-            src="https://placehold.co/300x400/05d9e8/000000/png?text=HOLO+ASSISTANT" 
+            src="/waifu-dashboard.png" 
             alt="Assistant" 
             className="h-full w-full object-contain drop-shadow-[0_0_20px_rgba(5,217,232,0.4)]"
           />

@@ -33,10 +33,10 @@ export default function LoginPage() {
       {/* Left Side: Character Art Placeholder */}
       <div className="hidden lg:block w-1/2 h-full relative">
         <div className="absolute bottom-0 left-10 w-full h-[90%] pointer-events-none">
-          {/* PLACEHOLDER FOR WAIFU - REPLACE src with "/waifu-login.png" */}
+          {/* Character Art */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
-            src="https://placehold.co/600x900/ff2a6d/white/png?text=YOUR+WAIFU+HERE" 
+            src="/waifu-login.png" 
             alt="Character" 
             className="h-full object-contain drop-shadow-[0_0_15px_rgba(255,42,109,0.5)]"
           />
