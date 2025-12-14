@@ -124,41 +124,16 @@ export default function NewOrderPage() {
     }
 
     // Prepare Items
-    // For custom items, we first need to insert them into menu_items (or handle them differently).
-    // To keep it simple and consistent, we'll insert custom items into menu_items on the fly as "Custom" category.
-    
-    const itemsToInsert = []
-
-    for (const item of cart) {
-      let menuItemId = item.id
-
-      if (item.isCustom) {
-        // Insert custom item into DB
-        const { data: customMenu, error: customError } = await supabase
-          .from('menu_items')
-          .insert({
-            title: item.title,
-            price: item.price,
-            category: 'Custom',
-            description: 'Вручную добавлено официантом'
-          })
-          .select()
-          .single()
-        
-        if (customError) {
-          console.error('Failed to create custom item', customError)
-          continue
+    const itemsToInsert = cart.map(item => {
+        return {
+            order_id: order.id,
+            menu_item_id: item.isCustom ? null : item.id, // Null for custom items, ID for menu items
+            quantity: item.quantity,
+            served: false,
+            item_title: item.title, // Denormalized title
+            item_price: item.price  // Denormalized price
         }
-        menuItemId = customMenu.id
-      }
-
-      itemsToInsert.push({
-        order_id: order.id,
-        menu_item_id: menuItemId,
-        quantity: item.quantity,
-        served: false
-      })
-    }
+    })
 
     const { error: itemsError } = await supabase
       .from('order_items')

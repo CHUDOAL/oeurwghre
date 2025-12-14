@@ -13,10 +13,12 @@ type OrderItem = {
   quantity: number
   served: boolean
   created_at: string
+  item_title?: string // New denormalized field
+  item_price?: number // New denormalized field
   menu_items: {
     title: string
     price: number
-  } | null // menu_items can be null if join fails, though unlikely
+  } | null
 }
 
 type Order = {
@@ -66,6 +68,8 @@ export default function OrderPage() {
         quantity, 
         served,
         created_at,
+        item_title,
+        item_price,
         menu_items ( title, price )
       `)
       .eq('order_id', id)
@@ -152,6 +156,9 @@ export default function OrderPage() {
           {items.map((item) => {
             const timer = getTimerStatus(item.created_at)
             
+            // Prefer denormalized title, fallback to joined title, finally unknown
+            const title = item.item_title || item.menu_items?.title || 'Неизвестное блюдо'
+
             return (
               <div 
                 key={item.id} 
@@ -171,7 +178,7 @@ export default function OrderPage() {
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <p className={`font-medium text-lg leading-tight ${item.served ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
-                      {item.menu_items?.title || 'Неизвестное блюдо (удалено)'}
+                      {title}
                     </p>
                     
                     {!item.served && (
