@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, Circle, Clock, PlusCircle, Trash2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Circle, Clock, PlusCircle, Trash2, Flame, Snowflake, Coffee } from 'lucide-react'
 import { useParams } from 'next/navigation'
 
 type OrderItem = {
@@ -15,9 +15,11 @@ type OrderItem = {
   created_at: string
   item_title?: string
   item_price?: number
+  item_station?: string // We added this column
   menu_items: {
     title: string
     price: number
+    station?: string // And this one
   } | null
 }
 
@@ -70,7 +72,8 @@ export default function OrderPage() {
         created_at,
         item_title,
         item_price,
-        menu_items ( title, price )
+        item_station,
+        menu_items ( title, price, station )
       `)
       .eq('order_id', id)
       .order('created_at', { ascending: true })
@@ -147,6 +150,29 @@ export default function OrderPage() {
     return { text: formatted, color: 'text-green-600', bg: 'bg-green-50' }
   }
 
+  // Group items by category (station)
+  const groupedItems = items.reduce((acc, item) => {
+    // Prefer stored station, fallback to joined, fallback to 'other'
+    const station = item.item_station || item.menu_items?.station || 'other'
+    if (!acc[station]) acc[station] = []
+    acc[station].push(item)
+    return acc
+  }, {} as Record<string, OrderItem[]>)
+
+  // Order of groups display
+  const stationOrder = ['drinks', 'rolls_cold', 'rolls_hot', 'cold', 'hot', 'other']
+  
+  const getStationLabel = (key: string) => {
+    switch (key) {
+      case 'drinks': return { label: 'Напитки', icon: <Coffee size={18} className="text-blue-500" /> }
+      case 'rolls_cold': return { label: 'Роллы (Хол)', icon: <Snowflake size={18} className="text-cyan-500" /> }
+      case 'rolls_hot': return { label: 'Роллы (Гор)', icon: <Flame size={18} className="text-orange-500" /> }
+      case 'cold': return { label: 'Холодный цех', icon: <Snowflake size={18} className="text-cyan-500" /> }
+      case 'hot': return { label: 'Горячий цех', icon: <Flame size={18} className="text-orange-500" /> }
+      default: return { label: 'Прочее', icon: <Circle size={18} className="text-gray-400" /> }
+    }
+  }
+
   if (loading) return <div className="p-10 text-center text-gray-500">Загрузка заказа...</div>
   if (!order) return null
 
@@ -166,7 +192,7 @@ export default function OrderPage() {
         </div>
       </header>
 
-      <div className="p-4 space-y-4 max-w-lg mx-auto">
+      <div className="p-4 space-y-6 max-w-lg mx-auto">
         {order.status === 'active' && (
           <Link 
             href={`/orders/${id}/add`}
@@ -177,73 +203,89 @@ export default function OrderPage() {
           </Link>
         )}
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          {items.length === 0 ? (
-             <div className="p-8 text-center text-gray-400">В заказе пока нет блюд</div>
-          ) : (
-            items.map((item) => {
-              const timer = getTimerStatus(item.created_at)
-              const title = item.item_title || item.menu_items?.title || 'Неизвестное блюдо'
+        {items.length === 0 ? (
+           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center text-gray-400">В заказе пока нет блюд</div>
+        ) : (
+          <div className="space-y-6">
+            {stationOrder.map(stationKey => {
+              const stationItems = groupedItems[stationKey]
+              if (!stationItems || stationItems.length === 0) return null
+              
+              const { label, icon } = getStationLabel(stationKey)
 
               return (
-                <div 
-                  key={item.id} 
-                  className={`flex items-start p-4 border-b border-gray-100 last:border-0 transition-colors ${
-                    item.served ? 'bg-gray-50' : 'bg-white'
-                  }`}
-                >
-                  {/* Click area for toggling served status */}
-                  <div 
-                    onClick={() => toggleServed(item.id, item.served)}
-                    className="flex-1 flex items-start cursor-pointer"
-                  >
-                    <div className="mt-1 mr-4">
-                      {item.served ? (
-                        <CheckCircle className="text-green-500" size={24} />
-                      ) : (
-                        <Circle className="text-gray-300" size={24} />
-                      )}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <p className={`font-medium text-lg leading-tight ${item.served ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
-                          {title}
-                        </p>
-                        
-                        {!item.served && (
-                          <div className={`ml-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-mono font-bold ${timer.bg} ${timer.color}`}>
-                            <Clock size={12} />
-                            {timer.text}
+                <div key={stationKey} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center gap-2 font-bold text-gray-700">
+                    {icon}
+                    {label}
+                  </div>
+                  
+                  {stationItems.map((item) => {
+                    const timer = getTimerStatus(item.created_at)
+                    const title = item.item_title || item.menu_items?.title || 'Неизвестное блюдо'
+
+                    return (
+                      <div 
+                        key={item.id} 
+                        className={`flex items-start p-4 border-b border-gray-100 last:border-0 transition-colors ${
+                          item.served ? 'bg-gray-50' : 'bg-white'
+                        }`}
+                      >
+                        {/* Click area for toggling served status */}
+                        <div 
+                          onClick={() => toggleServed(item.id, item.served)}
+                          className="flex-1 flex items-start cursor-pointer"
+                        >
+                          <div className="mt-1 mr-4">
+                            {item.served ? (
+                              <CheckCircle className="text-green-500" size={24} />
+                            ) : (
+                              <Circle className="text-gray-300" size={24} />
+                            )}
                           </div>
+                          
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <p className={`font-medium text-lg leading-tight ${item.served ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                                {title}
+                              </p>
+                              
+                              {!item.served && (
+                                <div className={`ml-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-mono font-bold ${timer.bg} ${timer.color}`}>
+                                  <Clock size={12} />
+                                  {timer.text}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {item.quantity > 1 && (
+                              <span className="inline-block bg-orange-100 text-orange-800 text-xs font-bold px-2 py-0.5 rounded-full mt-2">
+                                x{item.quantity}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Delete button (only for unserved items) */}
+                        {!item.served && order.status === 'active' && (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteItem(item.id)
+                            }}
+                            className="ml-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 size={20} />
+                          </button>
                         )}
                       </div>
-                      
-                      {item.quantity > 1 && (
-                        <span className="inline-block bg-orange-100 text-orange-800 text-xs font-bold px-2 py-0.5 rounded-full mt-2">
-                          x{item.quantity}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Delete button (only for unserved items) */}
-                  {!item.served && order.status === 'active' && (
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        deleteItem(item.id)
-                      }}
-                      className="ml-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  )}
+                    )
+                  })}
                 </div>
               )
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
 
         {order.status === 'active' && (
           <button
