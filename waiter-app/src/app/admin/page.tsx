@@ -8,7 +8,8 @@ import { getCroppedImg } from '@/lib/cropImage'
 import dynamic from 'next/dynamic'
 
 // Dynamically import Cropper with SSR disabled to prevent build errors
-const Cropper = dynamic(() => import('react-easy-crop'), { ssr: false })
+// We cast it to any to bypass strict type checking for dynamic import props which can cause build errors on some environments
+const Cropper = dynamic(() => import('react-easy-crop'), { ssr: false }) as any
 
 type MenuItem = {
   id: string
@@ -103,9 +104,6 @@ export default function AdminPage() {
     i.title.toLowerCase().includes(filter.toLowerCase())
   )
 
-  // Avoid hydration mismatch by showing loading or empty state initially if needed,
-  // but here we just return the layout.
-  
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col h-screen">
       <header className="bg-white p-4 shadow-sm flex items-center justify-between shrink-0 z-10">
