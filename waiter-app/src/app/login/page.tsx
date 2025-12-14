@@ -22,25 +22,25 @@ export default function LoginPage() {
       router.push('/')
       router.refresh()
     } else {
-      setError('Ошибка доступа. Попробуйте "gross" или "maxim"')
+      setError('Ошибка доступа')
     }
   }
 
   const loginMessages = [
-    "Добро пожаловать!",
-    "Готов к работе?",
-    "Не забудь свой бейджик!",
-    "Сегодня будет отличный день! ♡",
-    "Тануки ждет тебя!"
+    "Идентификация...",
+    "Добро пожаловать.",
+    "Система готова.",
+    "Хорошей смены."
   ]
 
   return (
-    <div className="flex min-h-screen relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]">
-      <div className="scanlines"></div>
+    <div className="flex min-h-screen relative overflow-hidden bg-[#f4f4f0]">
+      {/* Decorative Circle (Rising Sun) */}
+      <div className="absolute top-[-10%] right-[-10%] w-[50vh] h-[50vh] rounded-full bg-[#bc002d] opacity-10"></div>
       
-      {/* Left Side: Character Art */}
-      <div className="hidden lg:block w-1/2 h-full relative pointer-events-auto">
-        <div className="absolute bottom-0 left-10 w-full h-[90%]">
+      {/* Left: Assistant */}
+      <div className="hidden lg:block w-1/3 h-full relative pointer-events-auto border-r border-[#e0e0e0] bg-white">
+        <div className="absolute bottom-0 left-10 w-full h-[80%]">
           <Assistant 
             src="/waifu-login.png" 
             messages={loginMessages}
@@ -50,43 +50,47 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Side: Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 relative z-10">
-        
-        <div className="w-full max-w-md retro-card p-8 relative bg-white/90">
-          <h1 className="mb-6 text-center text-3xl font-bold text-[#2c2c54] tracking-wider">
-            ВХОД В СИСТЕМУ
-          </h1>
+      {/* Right: Login Form */}
+      <div className="w-full lg:w-2/3 flex flex-col items-center justify-center p-8 relative z-10">
+        <div className="w-full max-w-md space-y-12">
+          <div className="text-center space-y-2">
+            <h1 className="text-4xl tracking-widest uppercase">Tanuki<span className="text-[#bc002d]">.Sys</span></h1>
+            <p className="text-sm text-gray-400 tracking-[0.2em] uppercase">Staff Access Terminal</p>
+          </div>
           
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-[#2c2c54] uppercase">Идентификатор</label>
+          <form onSubmit={handleLogin} className="space-y-8">
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Идентификатор</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full retro-input text-lg"
-                placeholder="Ваше имя..."
+                className="jp-input text-2xl"
+                placeholder="Имя сотрудника"
                 required
               />
             </div>
 
             {error && (
-              <div className="text-sm text-red-500 font-bold border-2 border-red-200 bg-red-50 p-2 rounded-lg text-center">
-                ⚠ {error}
+              <div className="text-sm text-[#bc002d] border-l-2 border-[#bc002d] pl-4 py-2 bg-red-50">
+                {error}
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full retro-button"
+              className="w-full jp-button jp-button-red h-14"
             >
-              Начать смену
+              ВХОД В СИСТЕМУ
             </button>
           </form>
           
-          <div className="mt-6 text-center text-xs text-gray-400">
-            Tanuki System v2.0 © 1998
+          <div className="flex justify-center gap-4 text-[10px] text-gray-300 uppercase tracking-widest">
+            <span>Secure</span>
+            <span>•</span>
+            <span>Private</span>
+            <span>•</span>
+            <span>Logged</span>
           </div>
         </div>
       </div>

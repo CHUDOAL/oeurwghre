@@ -101,8 +101,8 @@ export default function NewOrderPage() {
   }
 
   const handleSubmit = async () => {
-    if (!tableNumber) return alert('ВВЕДИТЕ НОМЕР СТОЛА')
-    if (cart.length === 0) return alert('ВЫБЕРИТЕ БЛЮДА')
+    if (!tableNumber) return alert('НОМЕР СТОЛА?')
+    if (cart.length === 0) return alert('БЛЮДА?')
     
     setSubmitting(true)
     
@@ -117,53 +117,27 @@ export default function NewOrderPage() {
       .single()
 
     if (orderError) {
-      alert('Ошибка создания заказа: ' + orderError.message)
+      alert('Ошибка: ' + orderError.message)
       setSubmitting(false)
       return
     }
 
-    const itemsToInsert = []
-
-    for (const item of cart) {
-      let menuItemId = item.id
-
-      if (item.isCustom) {
-        const { data: customMenu, error: customError } = await supabase
-          .from('menu_items')
-          .insert({
-            title: item.title,
-            price: item.price,
-            category: 'Custom',
-            description: 'Добавлено вручную',
-            station: item.station
-          })
-          .select()
-          .single()
-        
-        if (customError) {
-          console.error('Failed to create custom item', customError)
-          continue
-        }
-        menuItemId = customMenu.id
-      }
-
-      itemsToInsert.push({
+    const itemsToInsert = cart.map(item => ({
         order_id: order.id,
-        menu_item_id: menuItemId,
+        menu_item_id: item.isCustom ? null : item.id,
         quantity: item.quantity,
         served: false,
         item_title: item.title,
         item_price: item.price,
         item_station: item.station
-      })
-    }
+    }))
 
     const { error: itemsError } = await supabase
       .from('order_items')
       .insert(itemsToInsert)
 
     if (itemsError) {
-      alert('Ошибка добавления блюд: ' + itemsError.message)
+      alert('Ошибка блюд: ' + itemsError.message)
     } else {
       router.push(`/orders/${order.id}`)
     }
@@ -179,84 +153,81 @@ export default function NewOrderPage() {
   const totalItems = cart.reduce((a, b) => a + b.quantity, 0)
 
   return (
-    <div className="min-h-screen pb-32 relative bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]">
-      <div className="scanlines"></div>
+    <div className="min-h-screen pb-32 bg-[#f4f4f0] relative">
+      {/* Texture Overlay */}
+      <div className="absolute inset-0 opacity-5 pointer-events-none" style={{backgroundImage: 'url("https://www.transparenttextures.com/patterns/wood-pattern.png")'}}></div>
 
-      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md p-4 shadow-sm flex items-center gap-4 border-b-2 border-[#ffb7c5]">
-        <Link href="/" className="text-[#ffb7c5] hover:text-[#2c2c54] transition-colors">
+      <header className="sticky top-0 z-20 bg-[#f4f4f0]/95 backdrop-blur-md p-6 flex items-center justify-between border-b border-[#e0e0e0]">
+        <Link href="/" className="text-gray-400 hover:text-black transition-colors">
           <ArrowLeft size={24} />
         </Link>
-        <h1 className="text-xl font-bold text-[#2c2c54]" style={{ fontFamily: 'var(--font-retro)' }}>НОВЫЙ ЗАКАЗ ({user})</h1>
+        <h1 className="text-xl font-serif tracking-widest uppercase">Заказ</h1>
       </header>
 
-      <div className="p-4 space-y-6 relative z-10">
-        {/* Table Number */}
-        <div className="retro-card p-4 bg-white">
-          <label className="block text-xs font-bold text-gray-400 uppercase mb-2">НОМЕР СТОЛА</label>
+      <div className="p-6 space-y-8 relative z-10">
+        <div className="space-y-2">
+          <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Номер Стола</label>
           <input
             type="text"
             value={tableNumber}
             onChange={(e) => setTableNumber(e.target.value)}
-            className="w-full text-2xl font-bold p-2 retro-input text-center text-[#2c2c54]"
+            className="w-full text-4xl font-serif bg-transparent border-b-2 border-gray-200 focus:border-[#bc002d] outline-none py-2 text-center transition-colors placeholder:text-gray-200"
             placeholder="00"
           />
         </div>
 
-        {/* Selected Items Preview */}
         {cart.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="font-bold text-[#2c2c54] text-xs uppercase bg-white/80 inline-block px-2 rounded">В корзине:</h3>
+          <div className="space-y-4">
+            <h3 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold border-b border-gray-200 pb-2">Выбрано</h3>
             {cart.map((item) => (
-              <div key={item.id} className="flex justify-between items-center bg-white border-2 border-[#ffb7c5] p-3 rounded-lg shadow-sm">
+              <div key={item.id} className="flex justify-between items-center group">
                 <div className="flex-1">
-                  <p className="font-bold text-[#2c2c54] text-sm uppercase">{item.title}</p>
-                  <p className="text-xs text-[#ffb7c5] font-bold">{item.price} ₽ {item.isCustom && '(РУЧНОЙ)'}</p>
+                  <p className="font-serif text-lg">{item.title}</p>
+                  <p className="text-xs text-gray-400 font-mono mt-1">{item.price} ₽</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-[#ffb7c5] hover:text-[#2c2c54]"><Minus size={16} /></button>
-                  <span className="font-bold text-[#2c2c54] w-4 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-[#ffb7c5] hover:text-[#2c2c54]"><Plus size={16} /></button>
+                <div className="flex items-center gap-4">
+                  <button onClick={() => updateQuantity(item.id, -1)} className="text-gray-300 hover:text-black"><Minus size={16} /></button>
+                  <span className="font-mono text-lg w-6 text-center">{item.quantity}</span>
+                  <button onClick={() => updateQuantity(item.id, 1)} className="text-gray-300 hover:text-black"><Plus size={16} /></button>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Custom Item Button */}
-        <div className="space-y-2">
+        <div className="space-y-4">
           {!showCustomInput ? (
             <button 
               onClick={() => setShowCustomInput(true)}
-              className="w-full py-3 border-2 border-dashed border-[#a0d8ef] text-[#a0d8ef] font-bold rounded-xl hover:bg-[#a0d8ef] hover:text-white transition-colors flex items-center justify-center gap-2 uppercase text-xs shadow-none"
+              className="w-full py-4 border border-dashed border-gray-300 text-gray-400 hover:border-gray-500 hover:text-gray-600 transition-all font-serif tracking-widest text-xs uppercase"
             >
-              <PlusCircle size={20} />
-              Добавить блюдо вручную
+              + Ручной Ввод
             </button>
           ) : (
-            <div className="retro-card p-4 space-y-3 animate-in fade-in bg-white">
+            <div className="bg-white border border-gray-200 p-6 space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="font-bold text-[#2c2c54] text-xs uppercase">Свое блюдо</h3>
-                <button onClick={() => setShowCustomInput(false)} className="text-gray-400 hover:text-red-500"><Trash2 size={18} /></button>
+                <h3 className="font-serif text-sm">Свое Блюдо</h3>
+                <button onClick={() => setShowCustomInput(false)} className="text-gray-300 hover:text-red-500"><Trash2 size={16} /></button>
               </div>
               <input
                 type="text"
-                placeholder="Название (например: Особый Сок)"
+                placeholder="Название"
                 value={customDishName}
                 onChange={(e) => setCustomDishName(e.target.value)}
-                className="w-full retro-input"
+                className="jp-input"
               />
-              <div className="flex gap-2">
+              <div className="flex gap-4">
                 <input
                   type="number"
                   placeholder="Цена"
                   value={customDishPrice}
                   onChange={(e) => setCustomDishPrice(e.target.value)}
-                  className="w-1/3 retro-input"
+                  className="jp-input w-1/3"
                 />
                 <button 
                   onClick={addCustomItem}
                   disabled={!customDishName}
-                  className="flex-1 bg-[#a0d8ef] text-white border-2 border-[#2c2c54] rounded-lg font-bold uppercase hover:shadow-md disabled:opacity-50"
+                  className="flex-1 bg-gray-900 text-white font-serif tracking-widest text-xs uppercase hover:bg-black transition-colors"
                 >
                   Добавить
                 </button>
@@ -265,14 +236,13 @@ export default function NewOrderPage() {
           )}
         </div>
 
-        {/* Menu Search */}
-        <div className="space-y-4 pt-4 border-t-2 border-[#e6e6fa] bg-white/50 p-2 rounded-xl">
+        <div className="pt-8 border-t border-gray-200 space-y-6">
           <input
             type="text"
-            placeholder="ПОИСК ПО МЕНЮ..."
+            placeholder="Поиск..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full retro-input uppercase"
+            className="jp-input uppercase text-sm placeholder:text-gray-300"
           />
 
           <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
@@ -280,10 +250,10 @@ export default function NewOrderPage() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`whitespace-nowrap px-3 py-1 text-[10px] font-bold uppercase border-2 rounded-full transition-all ${
+                className={`whitespace-nowrap px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
                   selectedCategory === cat
-                    ? 'bg-[#ffb7c5] text-white border-[#2c2c54] shadow-sm'
-                    : 'bg-white text-gray-500 border-gray-200 hover:border-[#ffb7c5]'
+                    ? 'bg-[#bc002d] text-white'
+                    : 'bg-white text-gray-400 hover:text-black'
                 }`}
               >
                 {cat}
@@ -291,30 +261,21 @@ export default function NewOrderPage() {
             ))}
           </div>
 
-          <div className="space-y-2">
+          <div className="grid gap-2">
             {filteredItems.map((item) => {
               const inCart = cart.find(c => c.id === item.id)
               const qty = inCart ? inCart.quantity : 0
               
               return (
-                <div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-lg border-2 border-transparent hover:border-[#a0d8ef] shadow-sm transition-all">
+                <div key={item.id} className="flex justify-between items-center p-4 bg-white border border-transparent hover:border-gray-200 transition-all cursor-pointer" onClick={() => addToCart(item)}>
                   <div className="flex-1">
-                    <p className="font-bold text-[#2c2c54] text-sm uppercase">{item.title}</p>
-                    <p className="text-[10px] text-gray-500">{item.price} ₽</p>
+                    <p className="font-serif text-sm">{item.title}</p>
+                    <p className="text-[10px] text-gray-400 mt-1 font-mono">{item.price} ₽</p>
                   </div>
                   
-                  {qty === 0 ? (
-                    <button
-                      onClick={() => addToCart(item)}
-                      className="p-2 text-[#a0d8ef] hover:text-[#ffb7c5] transition-colors bg-[#f0f8ff] rounded-full"
-                    >
-                      <Plus size={18} />
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-3 bg-[#f0f8ff] px-2 py-1 rounded-full border border-[#a0d8ef]">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-[#a0d8ef]"><Minus size={14} /></button>
-                      <span className="font-bold text-[#2c2c54] w-4 text-center">{qty}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-[#a0d8ef]"><Plus size={14} /></button>
+                  {qty > 0 && (
+                    <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full font-mono text-sm">
+                      {qty}
                     </div>
                   )}
                 </div>
@@ -325,24 +286,19 @@ export default function NewOrderPage() {
       </div>
 
       {totalItems > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t-4 border-[#ffb7c5] p-4 shadow-lg pb-safe z-30">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-gray-400 text-xs uppercase font-bold">{totalItems} ПОЗИЦИЙ</span>
-            <span className="font-bold text-xl text-[#2c2c54]" style={{ fontFamily: 'var(--font-retro)' }}>
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-6 shadow-2xl pb-safe z-30">
+          <div className="flex justify-between items-center mb-6">
+            <span className="text-[10px] uppercase tracking-widest text-gray-400">{totalItems} Позиций</span>
+            <span className="font-serif text-xl">
               {cart.reduce((sum, i) => sum + i.price * i.quantity, 0)} ₽
             </span>
           </div>
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="w-full retro-button text-lg flex items-center justify-center gap-2"
+            className="w-full jp-button jp-button-red h-14 text-sm"
           >
-            {submitting ? 'ОФОРМЛЯЕМ...' : (
-              <>
-                <ShoppingCart size={20} />
-                СОЗДАТЬ ЗАКАЗ
-              </>
-            )}
+            {submitting ? 'Обработка...' : 'ПОДТВЕРДИТЬ'}
           </button>
         </div>
       )}

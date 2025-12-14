@@ -1,30 +1,24 @@
 import type { Metadata } from "next";
-import { Orbitron, Noto_Sans_JP, Rajdhani } from "next/font/google";
+import { Noto_Sans_JP, Shippori_Mincho } from "next/font/google";
 import "./globals.css";
 
-const orbitron = Orbitron({
-  variable: "--font-orbitron",
-  subsets: ["latin"],
-  display: "swap",
-});
-
 const notoSansJP = Noto_Sans_JP({
-  variable: "--font-noto-sans-jp",
+  variable: "--font-noto-sans",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "700"],
   display: "swap",
 });
 
-const rajdhani = Rajdhani({
-  variable: "--font-rajdhani",
+const shipporiMincho = Shippori_Mincho({
+  variable: "--font-shippori",
   subsets: ["latin"],
-  weight: ["500", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Tanuki Waiter 2077",
-  description: "Cyberpunk Waiter Assistant",
+  title: "Tanuki Staff",
+  description: "Restaurant Management System",
 };
 
 export default function RootLayout({
@@ -33,16 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <body
-        className={`${orbitron.variable} ${notoSansJP.variable} ${rajdhani.variable} antialiased bg-[#050510] text-white min-h-screen overflow-x-hidden`}
+        className={`${notoSansJP.variable} ${shipporiMincho.variable} antialiased bg-[#F4F1EA] text-[#2C2C2C] min-h-screen overflow-x-hidden selection:bg-[#BC392B] selection:text-white`}
       >
-        <div className="fixed inset-0 z-[-1] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
-        <div className="fixed inset-0 z-[-2] bg-gradient-to-br from-[#1a0b2e] via-[#0f0518] to-[#000000]"></div>
-        
-        {/* Cyberpunk Grid Background */}
-        <div className="fixed inset-0 z-[-1] perspective-grid pointer-events-none opacity-30"></div>
-
         {children}
       </body>
     </html>

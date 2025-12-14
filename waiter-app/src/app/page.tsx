@@ -4,10 +4,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { PlusCircle, BookOpen, LogOut, Pencil, User, Coffee } from 'lucide-react'
+import { PlusCircle, BookOpen, LogOut, Pencil, User } from 'lucide-react'
 import Assistant from '@/components/Assistant'
 
-// Types
 type Order = {
   id: string
   table_number: string
@@ -23,7 +22,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check local auth
     const storedUser = localStorage.getItem('waiter_user')
     if (!storedUser) {
       router.push('/login')
@@ -35,7 +33,7 @@ export default function Dashboard() {
   }, [router])
 
   const fetchOrders = async (currentUser: string) => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('orders')
       .select('*')
       .eq('status', 'active')
@@ -54,24 +52,21 @@ export default function Dashboard() {
   }
 
   const dashboardMessages = [
-    `Привет, ${user}! \nПолон сил?`,
-    "Проверяю столики...",
-    "Не забудь передохнуть!",
-    "Кажется, новые гости!",
-    "Работаем красиво! ✨",
-    "Удачи! ♡"
+    `С возвращением, ${user}.`,
+    "Новые заказы?",
+    "Ожидаю указаний.",
+    "Система в норме."
   ]
 
-  if (loading) return <div className="p-4 text-center text-indigo-500 font-bold animate-pulse">Загрузка системы...</div>
+  if (loading) return <div className="p-8 text-center tracking-widest uppercase text-gray-400">Загрузка...</div>
 
   if (!user) return null
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden bg-slate-50">
+    <div className="min-h-screen relative overflow-x-hidden bg-[#f4f4f0]">
       
-      {/* Assistant (Background Layer) */}
-      {/* Moved down (-bottom-12) to hide cut-off edge during float animation */}
-      <div className="fixed -bottom-12 right-0 z-0 h-[400px] w-[300px] pointer-events-auto opacity-100">
+      {/* Assistant */}
+      <div className="fixed -bottom-12 right-0 z-0 h-[450px] w-[350px] pointer-events-auto opacity-100">
          <Assistant 
             src="/waifu-dashboard.png" 
             messages={dashboardMessages}
@@ -80,77 +75,58 @@ export default function Dashboard() {
          />
       </div>
 
-      <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md p-4 shadow-sm flex justify-between items-center border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-100 p-2 rounded-full">
-            <Coffee size={20} className="text-indigo-600" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-800 tracking-tight">
-              Tanuki<span className="text-indigo-600">App</span>
-            </h1>
-            <p className="text-xs text-slate-500 font-medium flex items-center gap-1">
-              <User size={10} /> {user?.toUpperCase()}
-            </p>
-          </div>
+      <header className="sticky top-0 z-20 bg-[#f4f4f0]/95 backdrop-blur-sm p-6 flex justify-between items-center border-b border-[#e0e0e0]">
+        <div>
+          <h1 className="text-xl tracking-widest font-serif">TANUKI</h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
+            <span className="w-2 h-2 bg-[#bc002d] rounded-full"></span>
+            {user?.toUpperCase()}
+          </p>
         </div>
-        <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors p-2 hover:bg-red-50 rounded-full">
-          <LogOut size={20} />
+        <button onClick={handleLogout} className="text-gray-400 hover:text-[#bc002d] transition-colors border border-gray-300 rounded-full p-2">
+          <LogOut size={16} />
         </button>
       </header>
 
-      {/* Main Content with padding to avoid overlapping assistant */}
-      <main className="p-4 space-y-8 relative z-10 pb-40 max-w-2xl mx-auto xl:mx-0 xl:max-w-4xl">
-        <div className="grid grid-cols-2 gap-4">
-          <Link href="/orders/new" className="group anime-card p-6 flex flex-col items-center justify-center bg-white hover:bg-indigo-50/50 cursor-pointer">
-            <div className="bg-indigo-100 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform">
-                <PlusCircle size={32} className="text-indigo-600" />
-            </div>
-            <span className="font-bold text-slate-700 text-sm">Новый Заказ</span>
+      <main className="p-6 relative z-10 pb-40 max-w-3xl mx-auto xl:mx-0">
+        <div className="grid grid-cols-2 gap-6 mb-12">
+          <Link href="/orders/new" className="jp-card p-8 flex flex-col items-center justify-center gap-4 group cursor-pointer aspect-square">
+            <PlusCircle size={32} className="text-gray-800 group-hover:scale-110 transition-transform" />
+            <span className="font-serif tracking-widest text-sm uppercase border-b border-transparent group-hover:border-[#bc002d] pb-1 transition-all">Новый Заказ</span>
           </Link>
           
-          <Link href="/menu" className="group anime-card p-6 flex flex-col items-center justify-center bg-white hover:bg-pink-50/50 cursor-pointer">
-            <div className="bg-pink-100 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform">
-                <BookOpen size={32} className="text-pink-600" />
-            </div>
-            <span className="font-bold text-slate-700 text-sm">Меню</span>
+          <Link href="/menu" className="jp-card p-8 flex flex-col items-center justify-center gap-4 group cursor-pointer aspect-square">
+            <BookOpen size={32} className="text-gray-800 group-hover:scale-110 transition-transform" />
+            <span className="font-serif tracking-widest text-sm uppercase border-b border-transparent group-hover:border-[#bc002d] pb-1 transition-all">Меню</span>
           </Link>
 
-          <Link href="/admin" className="col-span-2 group anime-card p-4 flex flex-row items-center justify-center gap-3 bg-white hover:bg-slate-50 cursor-pointer">
-            <Pencil size={20} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
-            <span className="font-semibold text-slate-500 group-hover:text-slate-700 transition-colors text-sm">Редактор Меню</span>
+          <Link href="/admin" className="col-span-2 jp-card p-6 flex flex-row items-center justify-center gap-4 group cursor-pointer">
+            <Pencil size={18} className="text-gray-400 group-hover:text-gray-800" />
+            <span className="font-serif tracking-widest text-xs uppercase text-gray-500 group-hover:text-gray-800">Редактор Меню</span>
           </Link>
         </div>
 
         <div>
-          <h2 className="mb-4 text-lg text-slate-800 font-bold flex items-center gap-2">
-            <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
-            </span>
+          <h2 className="mb-6 text-sm text-gray-400 uppercase tracking-[0.2em] font-bold border-l-4 border-[#bc002d] pl-3">
             Активные Столы
           </h2>
           
           {orders.length === 0 ? (
-            <div className="text-slate-400 text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-              <p className="font-medium text-sm">Нет активных заказов</p>
-              <p className="text-xs mt-1">Нажмите "Новый Заказ" чтобы начать</p>
+            <div className="text-gray-300 text-center py-16 border border-dashed border-gray-300">
+              <p className="font-serif tracking-widest">ПУСТО</p>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="grid gap-4">
               {orders.map((order) => (
                 <Link key={order.id} href={`/orders/${order.id}`}>
-                  <div className="anime-card p-5 flex justify-between items-center hover:border-indigo-200 cursor-pointer bg-white/95 backdrop-blur-sm">
+                  <div className="jp-card p-6 flex justify-between items-center cursor-pointer group bg-white/90 backdrop-blur-sm">
                     <div>
-                      <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Столик</span>
-                      <span className="text-4xl font-black text-slate-800">{order.table_number}</span>
+                      <span className="block text-[10px] text-gray-400 uppercase tracking-widest mb-1">Table</span>
+                      <span className="text-3xl font-serif">{order.table_number}</span>
                     </div>
                     <div className="text-right">
-                      <div className={`status-badge ${order.status === 'active' ? 'status-active' : 'status-closed'}`}>
-                        {order.status === 'active' ? 'Активен' : order.status}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-2 font-medium">
-                        {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      <div className={`text-[10px] font-bold uppercase tracking-widest border px-3 py-1 ${order.status === 'active' ? 'border-[#bc002d] text-[#bc002d]' : 'border-gray-300 text-gray-400'}`}>
+                        {order.status === 'active' ? 'ACTIVE' : 'CLOSED'}
                       </div>
                     </div>
                   </div>

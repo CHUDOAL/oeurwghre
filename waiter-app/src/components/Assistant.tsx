@@ -27,7 +27,6 @@ export default function Assistant({ src, alt = "Assistant", messages, className 
     setTimeout(() => setShowBubble(false), 4000)
   }
 
-  // Random idle speech
   useEffect(() => {
     const interval = setInterval(() => {
       if (Math.random() > 0.9) { 
@@ -46,21 +45,19 @@ export default function Assistant({ src, alt = "Assistant", messages, className 
   }
 
   return (
-    <div className={`relative cursor-pointer transition-all hover:brightness-110 ${className}`} onClick={speak}>
-      {/* Speech Bubble */}
+    <div className={`relative cursor-pointer transition-all hover:opacity-90 ${className}`} onClick={speak}>
       {showBubble && (
-        <div className="modern-bubble z-50 whitespace-pre-wrap" style={bubbleStyle}>
+        <div className="clean-bubble z-50 whitespace-pre-wrap" style={bubbleStyle}>
           {currentMessage}
         </div>
       )}
 
-      {/* Image Container with Float Animation */}
       <div className="animate-float w-full h-full relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
           src={src} 
           alt={alt} 
-          className="w-full h-full object-contain drop-shadow-xl"
+          className="w-full h-full object-contain filter drop-shadow-lg"
         />
       </div>
     </div>
