@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Assistant from '@/components/Assistant'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
@@ -21,67 +22,71 @@ export default function LoginPage() {
       router.push('/')
       router.refresh()
     } else {
-      setError('ACCESS DENIED. TRY "gross" OR "maxim"')
+      setError('Ошибка доступа. Попробуйте "gross" или "maxim"')
     }
   }
 
+  const loginMessages = [
+    "Добро пожаловать!",
+    "Готов к работе?",
+    "Не забудь свой бейджик!",
+    "Сегодня будет отличный день! ♡",
+    "Тануки ждет тебя!"
+  ]
+
   return (
-    <div className="flex min-h-screen relative overflow-hidden">
-      {/* Background Anime Grid */}
-      <div className="absolute inset-0 z-[-1] perspective-grid opacity-30"></div>
+    <div className="flex min-h-screen relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]">
+      <div className="scanlines"></div>
       
-      {/* Left Side: Character Art Placeholder */}
-      <div className="hidden lg:block w-1/2 h-full relative">
-        <div className="absolute bottom-0 left-10 w-full h-[90%] pointer-events-none">
-          {/* Character Art */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
+      {/* Left Side: Character Art */}
+      <div className="hidden lg:block w-1/2 h-full relative pointer-events-auto">
+        <div className="absolute bottom-0 left-10 w-full h-[90%]">
+          <Assistant 
             src="/waifu-login.png" 
-            alt="Character" 
-            className="h-full object-contain drop-shadow-[0_0_15px_rgba(255,42,109,0.5)]"
+            messages={loginMessages}
+            bubblePosition="top-right"
+            className="h-full w-full"
           />
         </div>
       </div>
 
       {/* Right Side: Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-4 relative z-10">
-        <div className="absolute top-10 right-10 w-32 h-32 border-r-2 border-t-2 border-neon-blue opacity-50"></div>
-        <div className="absolute bottom-10 left-10 w-32 h-32 border-l-2 border-b-2 border-neon-pink opacity-50"></div>
         
-        <div className="w-full max-w-md cyber-card p-8 relative">
-          <h1 className="mb-8 text-center text-3xl font-bold text-white tracking-widest glitch-text" data-text="SYSTEM LOGIN">
-            SYSTEM LOGIN
+        <div className="w-full max-w-md retro-card p-8 relative bg-white/90">
+          <h1 className="mb-6 text-center text-3xl font-bold text-[#2c2c54] tracking-wider">
+            ВХОД В СИСТЕМУ
           </h1>
           
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-neon-blue uppercase tracking-widest">Identify Yourself</label>
+              <label className="block text-sm font-bold text-[#2c2c54] uppercase">Идентификатор</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-black/50 border border-gray-700 text-white p-3 rounded-none focus:border-neon-pink focus:outline-none focus:ring-1 focus:ring-neon-pink transition-all font-mono text-lg tracking-wider cyber-input"
-                placeholder="CODENAME"
+                className="w-full retro-input text-lg"
+                placeholder="Ваше имя..."
                 required
               />
             </div>
 
             {error && (
-              <div className="text-sm text-red-500 font-bold tracking-wide animate-pulse border border-red-500/50 p-2 bg-red-500/10 text-center">
+              <div className="text-sm text-red-500 font-bold border-2 border-red-200 bg-red-50 p-2 rounded-lg text-center">
                 ⚠ {error}
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full py-3 bg-neon-pink/10 border border-neon-pink text-neon-pink hover:bg-neon-pink hover:text-black font-bold uppercase tracking-[0.2em] transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,42,109,0.6)] clip-path-badge"
+              className="w-full retro-button"
             >
-              Initialize Link
+              Начать смену
             </button>
           </form>
           
-          <div className="mt-6 text-center text-[10px] text-gray-500 font-mono">
-            SECURE CONNECTION ESTABLISHED // V.2026
+          <div className="mt-6 text-center text-xs text-gray-400">
+            Tanuki System v2.0 © 1998
           </div>
         </div>
       </div>

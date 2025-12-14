@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -54,7 +54,7 @@ export default function OrderPage() {
       .single()
 
     if (orderError) {
-      alert('Order not found')
+      alert('Заказ не найден')
       router.push('/')
       return
     }
@@ -93,12 +93,12 @@ export default function OrderPage() {
 
     if (error) {
       setItems(items.map(i => i.id === itemId ? { ...i, served: currentStatus } : i))
-      alert('Error updating status')
+      alert('Ошибка обновления')
     }
   }
 
   const deleteItem = async (itemId: string) => {
-    if (!confirm('DELETE ITEM FROM DATABASE?')) return
+    if (!confirm('Удалить эту позицию?')) return
 
     const { error } = await supabase
       .from('order_items')
@@ -106,14 +106,14 @@ export default function OrderPage() {
       .eq('id', itemId)
 
     if (error) {
-      alert('Delete error: ' + error.message)
+      alert('Ошибка удаления: ' + error.message)
     } else {
       setItems(items.filter(i => i.id !== itemId))
     }
   }
 
   const closeOrder = async () => {
-    if (!confirm('CLOSE ORDER?')) return
+    if (!confirm('Закрыть счет?')) return
 
     const { error } = await supabase
       .from('orders')
@@ -121,7 +121,7 @@ export default function OrderPage() {
       .eq('id', id)
 
     if (error) {
-      alert('Error closing order')
+      alert('Ошибка закрытия')
     } else {
       router.push('/')
     }
@@ -138,14 +138,15 @@ export default function OrderPage() {
     const seconds = Math.floor((absRemaining % 60000) / 1000)
     const formatted = `${remaining < 0 ? '-' : ''}${minutes}:${seconds.toString().padStart(2, '0')}`
 
+    // Colors: Retro Anime Palette
     if (remaining <= 0) {
-        return { text: formatted, color: 'text-neon-pink', bg: 'bg-black border border-neon-pink' }
+        return { text: formatted, color: 'text-white', bg: 'bg-[#ffb7c5] border border-[#2c2c54]' } // Late (Pink)
     }
     
     if (remaining < 2 * 60 * 1000) {
-        return { text: formatted, color: 'text-neon-yellow', bg: 'bg-black border border-neon-yellow' }
+        return { text: formatted, color: 'text-[#2c2c54]', bg: 'bg-[#fffdd0] border border-[#2c2c54]' } // Warning (Cream/Yellow)
     }
-    return { text: formatted, color: 'text-neon-blue', bg: 'bg-black border border-neon-blue' }
+    return { text: formatted, color: 'text-white', bg: 'bg-[#a0d8ef] border border-[#2c2c54]' } // Good (Blue)
   }
 
   const groupedItems = items.reduce((acc, item) => {
@@ -159,29 +160,31 @@ export default function OrderPage() {
   
   const getStationLabel = (key: string) => {
     switch (key) {
-      case 'drinks': return { label: 'DRINKS', icon: <Coffee size={18} className="text-neon-blue" /> }
-      case 'rolls_cold': return { label: 'ROLLS [COLD]', icon: <Snowflake size={18} className="text-neon-blue" /> }
-      case 'rolls_hot': return { label: 'ROLLS [HOT]', icon: <Flame size={18} className="text-neon-pink" /> }
-      case 'cold': return { label: 'COLD KITCHEN', icon: <Snowflake size={18} className="text-neon-blue" /> }
-      case 'hot': return { label: 'HOT KITCHEN', icon: <Flame size={18} className="text-neon-pink" /> }
-      default: return { label: 'OTHER', icon: <Circle size={18} className="text-gray-400" /> }
+      case 'drinks': return { label: 'НАПИТКИ', icon: <Coffee size={18} className="text-[#a0d8ef]" /> }
+      case 'rolls_cold': return { label: 'РОЛЛЫ (ХОЛ)', icon: <Snowflake size={18} className="text-[#a0d8ef]" /> }
+      case 'rolls_hot': return { label: 'РОЛЛЫ (ГОР)', icon: <Flame size={18} className="text-[#ffb7c5]" /> }
+      case 'cold': return { label: 'ХОЛОДНЫЙ ЦЕХ', icon: <Snowflake size={18} className="text-[#a0d8ef]" /> }
+      case 'hot': return { label: 'ГОРЯЧИЙ ЦЕХ', icon: <Flame size={18} className="text-[#ffb7c5]" /> }
+      default: return { label: 'ПРОЧЕЕ', icon: <Circle size={18} className="text-gray-400" /> }
     }
   }
 
-  if (loading) return <div className="p-10 text-center text-neon-blue font-mono animate-pulse">DOWNLOADING ORDER DATA...</div>
+  if (loading) return <div className="p-10 text-center text-[#2c2c54] font-bold animate-pulse">ЗАГРУЗКА ДАННЫХ...</div>
   if (!order) return null
 
   return (
-    <div className="min-h-screen pb-20 relative">
-      <header className="sticky top-0 z-10 bg-[#01012b]/90 backdrop-blur-md p-4 shadow-[0_2px_10px_rgba(5,217,232,0.2)] flex items-center justify-between border-b border-neon-blue/30">
+    <div className="min-h-screen pb-20 relative bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]">
+      <div className="scanlines"></div>
+
+      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md p-4 shadow-sm flex items-center justify-between border-b-2 border-[#ffb7c5]">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-neon-blue hover:text-neon-pink transition-colors">
+          <Link href="/" className="text-[#ffb7c5] hover:text-[#2c2c54] transition-colors">
             <ArrowLeft size={24} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white uppercase tracking-widest font-mono glitch-text" data-text={`TABLE ${order.table_number}`}>TABLE {order.table_number}</h1>
-            <span className={`text-[10px] px-2 py-0.5 font-bold uppercase tracking-widest border ${order.status === 'active' ? 'text-neon-blue border-neon-blue' : 'text-gray-500 border-gray-500'}`}>
-              {order.status === 'active' ? 'ONLINE' : 'OFFLINE'}
+            <h1 className="text-2xl font-bold text-[#2c2c54]" style={{ fontFamily: 'var(--font-retro)' }}>СТОЛИК {order.table_number}</h1>
+            <span className={`text-[10px] px-2 py-0.5 font-bold uppercase border rounded-full ${order.status === 'active' ? 'bg-[#a0d8ef] text-white border-[#2c2c54]' : 'bg-gray-200 text-gray-500 border-gray-400'}`}>
+              {order.status === 'active' ? 'ОТКРЫТ' : 'ЗАКРЫТ'}
             </span>
           </div>
         </div>
@@ -191,15 +194,15 @@ export default function OrderPage() {
         {order.status === 'active' && (
           <Link 
             href={`/orders/${id}/add`}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-neon-blue/10 border border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-black font-bold uppercase tracking-[0.2em] transition-all duration-300"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-[#a0d8ef] text-[#a0d8ef] hover:bg-[#a0d8ef] hover:text-white font-bold uppercase rounded-xl transition-all shadow-sm active:translate-y-1"
           >
             <PlusCircle size={20} />
-            ADD ITEMS
+            ДОБАВИТЬ ПОЗИЦИИ
           </Link>
         )}
 
         {items.length === 0 ? (
-           <div className="cyber-card p-8 text-center text-gray-400 font-mono">NO ITEMS DETECTED</div>
+           <div className="retro-card p-8 text-center text-gray-400 font-bold bg-white">НЕТ БЛЮД</div>
         ) : (
           <div className="space-y-6">
             {stationOrder.map(stationKey => {
@@ -209,21 +212,21 @@ export default function OrderPage() {
               const { label, icon } = getStationLabel(stationKey)
 
               return (
-                <div key={stationKey} className="cyber-card p-0">
-                  <div className="bg-black/40 px-4 py-2 border-b border-neon-blue/30 flex items-center gap-2 font-bold text-neon-blue uppercase tracking-widest text-xs">
+                <div key={stationKey} className="retro-card p-0 bg-white overflow-hidden">
+                  <div className="bg-[#f0f8ff] px-4 py-2 border-b-2 border-[#e6e6fa] flex items-center gap-2 font-bold text-[#2c2c54] uppercase text-xs">
                     {icon}
                     {label}
                   </div>
                   
                   {stationItems.map((item) => {
                     const timer = getTimerStatus(item.created_at)
-                    const title = item.item_title || item.menu_items?.title || 'UNKNOWN ENTITY'
+                    const title = item.item_title || item.menu_items?.title || 'НЕИЗВЕСТНО'
 
                     return (
                       <div 
                         key={item.id} 
-                        className={`flex items-start p-4 border-b border-gray-700/50 last:border-0 transition-colors ${
-                          item.served ? 'bg-black/60 opacity-50' : 'hover:bg-white/5'
+                        className={`flex items-start p-4 border-b border-dashed border-gray-200 last:border-0 transition-colors ${
+                          item.served ? 'bg-gray-50 opacity-60 grayscale' : 'hover:bg-[#fff0f5]'
                         }`}
                       >
                         <div 
@@ -232,20 +235,20 @@ export default function OrderPage() {
                         >
                           <div className="mt-1 mr-4">
                             {item.served ? (
-                              <CheckCircle className="text-neon-pink" size={24} />
+                              <CheckCircle className="text-[#a0d8ef]" size={24} />
                             ) : (
-                              <Circle className="text-gray-600" size={24} />
+                              <Circle className="text-gray-300" size={24} />
                             )}
                           </div>
                           
                           <div className="flex-1">
                             <div className="flex justify-between items-start">
-                              <p className={`font-bold text-lg leading-tight uppercase font-mono ${item.served ? 'text-gray-500 line-through decoration-neon-pink' : 'text-white'}`}>
+                              <p className={`font-bold text-lg leading-tight uppercase ${item.served ? 'text-gray-400 line-through' : 'text-[#2c2c54]'}`} style={{ fontFamily: 'var(--font-soft)' }}>
                                 {title}
                               </p>
                               
                               {!item.served && (
-                                <div className={`ml-2 flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-bold ${timer.bg} ${timer.color}`}>
+                                <div className={`ml-2 flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-lg shadow-sm ${timer.bg} ${timer.color}`}>
                                   <Clock size={10} />
                                   {timer.text}
                                 </div>
@@ -253,7 +256,7 @@ export default function OrderPage() {
                             </div>
                             
                             {item.quantity > 1 && (
-                              <span className="inline-block mt-2 px-2 py-0.5 bg-neon-purple text-black text-xs font-bold uppercase">
+                              <span className="inline-block mt-2 px-2 py-0.5 bg-[#e6e6fa] text-[#2c2c54] text-xs font-bold rounded-full border border-[#2c2c54]">
                                 x{item.quantity}
                               </span>
                             )}
@@ -266,7 +269,7 @@ export default function OrderPage() {
                               e.stopPropagation()
                               deleteItem(item.id)
                             }}
-                            className="ml-2 p-2 text-gray-500 hover:text-red-500 transition-colors"
+                            className="ml-2 p-2 text-gray-400 hover:text-red-500 transition-colors"
                           >
                             <Trash2 size={20} />
                           </button>
@@ -283,9 +286,9 @@ export default function OrderPage() {
         {order.status === 'active' && (
           <button
             onClick={closeOrder}
-            className="w-full py-4 border border-neon-pink text-neon-pink hover:bg-neon-pink hover:text-black font-bold uppercase tracking-[0.2em] transition-all duration-300 shadow-[0_0_15px_rgba(255,42,109,0.3)] hover:shadow-[0_0_30px_rgba(255,42,109,0.6)]"
+            className="w-full retro-button bg-[#2c2c54] text-white border-white hover:bg-[#1a1a3a] shadow-lg"
           >
-            TERMINATE SESSION (CLOSE TABLE)
+            ЗАКРЫТЬ СТОЛ (СЧЕТ)
           </button>
         )}
       </div>

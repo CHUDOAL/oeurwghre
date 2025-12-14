@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Search, Minus, Plus, ShoppingCart, PlusCircle, Trash2 } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, ShoppingCart, PlusCircle, Trash2 } from 'lucide-react'
 
 type MenuItem = {
   id: string
@@ -30,8 +30,8 @@ export default function NewOrderPage() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [categories, setCategories] = useState<string[]>(['All'])
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [categories, setCategories] = useState<string[]>(['Все'])
+  const [selectedCategory, setSelectedCategory] = useState('Все')
   const [submitting, setSubmitting] = useState(false)
   const [user, setUser] = useState<string | null>(null)
 
@@ -53,8 +53,8 @@ export default function NewOrderPage() {
     const { data } = await supabase.from('menu_items').select('id, title, price, category, station')
     if (data) {
       setItems(data)
-      const uniqueCategories = Array.from(new Set(data.map((i) => i.category || 'Other')))
-      setCategories(['All', ...uniqueCategories])
+      const uniqueCategories = Array.from(new Set(data.map((i) => i.category || 'Прочее')))
+      setCategories(['Все', ...uniqueCategories])
     }
     setLoading(false)
   }
@@ -101,8 +101,8 @@ export default function NewOrderPage() {
   }
 
   const handleSubmit = async () => {
-    if (!tableNumber) return alert('ENTER TABLE ID')
-    if (cart.length === 0) return alert('SELECT ITEMS')
+    if (!tableNumber) return alert('ВВЕДИТЕ НОМЕР СТОЛА')
+    if (cart.length === 0) return alert('ВЫБЕРИТЕ БЛЮДА')
     
     setSubmitting(true)
     
@@ -117,7 +117,7 @@ export default function NewOrderPage() {
       .single()
 
     if (orderError) {
-      alert('Error creating order: ' + orderError.message)
+      alert('Ошибка создания заказа: ' + orderError.message)
       setSubmitting(false)
       return
     }
@@ -134,7 +134,7 @@ export default function NewOrderPage() {
             title: item.title,
             price: item.price,
             category: 'Custom',
-            description: 'Custom entry by waiter',
+            description: 'Добавлено вручную',
             station: item.station
           })
           .select()
@@ -163,7 +163,7 @@ export default function NewOrderPage() {
       .insert(itemsToInsert)
 
     if (itemsError) {
-      alert('Error adding items: ' + itemsError.message)
+      alert('Ошибка добавления блюд: ' + itemsError.message)
     } else {
       router.push(`/orders/${order.id}`)
     }
@@ -172,30 +172,32 @@ export default function NewOrderPage() {
 
   const filteredItems = items.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase())
-    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory
+    const matchesCategory = selectedCategory === 'Все' || item.category === selectedCategory
     return matchesSearch && matchesCategory
   })
 
   const totalItems = cart.reduce((a, b) => a + b.quantity, 0)
 
   return (
-    <div className="min-h-screen pb-32 relative">
-      <header className="sticky top-0 z-10 bg-[#01012b]/90 backdrop-blur-md p-4 shadow-[0_2px_10px_rgba(5,217,232,0.2)] flex items-center gap-4 border-b border-neon-blue/30">
-        <Link href="/" className="text-neon-pink hover:text-white transition-colors">
+    <div className="min-h-screen pb-32 relative bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]">
+      <div className="scanlines"></div>
+
+      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md p-4 shadow-sm flex items-center gap-4 border-b-2 border-[#ffb7c5]">
+        <Link href="/" className="text-[#ffb7c5] hover:text-[#2c2c54] transition-colors">
           <ArrowLeft size={24} />
         </Link>
-        <h1 className="text-xl font-bold text-white uppercase tracking-widest font-mono glitch-text" data-text="INITIATE ORDER">INITIATE ORDER ({user})</h1>
+        <h1 className="text-xl font-bold text-[#2c2c54]" style={{ fontFamily: 'var(--font-retro)' }}>НОВЫЙ ЗАКАЗ ({user})</h1>
       </header>
 
       <div className="p-4 space-y-6 relative z-10">
         {/* Table Number */}
-        <div className="cyber-card p-4">
-          <label className="block text-[10px] font-bold text-neon-blue uppercase tracking-widest mb-2">TARGET UNIT ID (TABLE)</label>
+        <div className="retro-card p-4 bg-white">
+          <label className="block text-xs font-bold text-gray-400 uppercase mb-2">НОМЕР СТОЛА</label>
           <input
             type="text"
             value={tableNumber}
             onChange={(e) => setTableNumber(e.target.value)}
-            className="w-full text-2xl font-bold font-mono p-2 bg-black/50 border border-neon-blue/50 text-white focus:border-neon-pink outline-none text-center placeholder:text-gray-700"
+            className="w-full text-2xl font-bold p-2 retro-input text-center text-[#2c2c54]"
             placeholder="00"
           />
         </div>
@@ -203,17 +205,17 @@ export default function NewOrderPage() {
         {/* Selected Items Preview */}
         {cart.length > 0 && (
           <div className="space-y-2">
-            <h3 className="font-bold text-white text-xs uppercase tracking-widest">Selected Payload:</h3>
+            <h3 className="font-bold text-[#2c2c54] text-xs uppercase bg-white/80 inline-block px-2 rounded">В корзине:</h3>
             {cart.map((item) => (
-              <div key={item.id} className="flex justify-between items-center bg-neon-pink/10 p-3 border border-neon-pink/30 clip-path-badge">
+              <div key={item.id} className="flex justify-between items-center bg-white border-2 border-[#ffb7c5] p-3 rounded-lg shadow-sm">
                 <div className="flex-1">
-                  <p className="font-bold text-white font-mono text-sm uppercase">{item.title}</p>
-                  <p className="text-[10px] text-neon-pink">{item.price} ¥ {item.isCustom && '(MANUAL)'}</p>
+                  <p className="font-bold text-[#2c2c54] text-sm uppercase">{item.title}</p>
+                  <p className="text-xs text-[#ffb7c5] font-bold">{item.price} ₽ {item.isCustom && '(РУЧНОЙ)'}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-neon-pink hover:bg-neon-pink hover:text-black transition-colors"><Minus size={16} /></button>
-                  <span className="font-bold text-white font-mono w-4 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-neon-pink hover:bg-neon-pink hover:text-black transition-colors"><Plus size={16} /></button>
+                  <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-[#ffb7c5] hover:text-[#2c2c54]"><Minus size={16} /></button>
+                  <span className="font-bold text-[#2c2c54] w-4 text-center">{item.quantity}</span>
+                  <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-[#ffb7c5] hover:text-[#2c2c54]"><Plus size={16} /></button>
                 </div>
               </div>
             ))}
@@ -225,38 +227,38 @@ export default function NewOrderPage() {
           {!showCustomInput ? (
             <button 
               onClick={() => setShowCustomInput(true)}
-              className="w-full py-3 border border-dashed border-gray-600 text-gray-400 font-mono hover:border-neon-blue hover:text-neon-blue transition-colors flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+              className="w-full py-3 border-2 border-dashed border-[#a0d8ef] text-[#a0d8ef] font-bold rounded-xl hover:bg-[#a0d8ef] hover:text-white transition-colors flex items-center justify-center gap-2 uppercase text-xs shadow-none"
             >
               <PlusCircle size={20} />
-              MANUAL ENTRY OVERRIDE
+              Добавить блюдо вручную
             </button>
           ) : (
-            <div className="cyber-card p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
+            <div className="retro-card p-4 space-y-3 animate-in fade-in bg-white">
               <div className="flex justify-between items-center">
-                <h3 className="font-bold text-neon-blue text-xs uppercase tracking-widest">New Entry</h3>
-                <button onClick={() => setShowCustomInput(false)} className="text-gray-500 hover:text-red-500"><Trash2 size={18} /></button>
+                <h3 className="font-bold text-[#2c2c54] text-xs uppercase">Свое блюдо</h3>
+                <button onClick={() => setShowCustomInput(false)} className="text-gray-400 hover:text-red-500"><Trash2 size={18} /></button>
               </div>
               <input
                 type="text"
-                placeholder="ITEM NAME (e.g. SPECIAL SAKE)"
+                placeholder="Название (например: Особый Сок)"
                 value={customDishName}
                 onChange={(e) => setCustomDishName(e.target.value)}
-                className="w-full p-2 bg-black/50 border border-gray-700 text-white font-mono text-sm placeholder:text-gray-700 focus:border-neon-blue outline-none"
+                className="w-full retro-input"
               />
               <div className="flex gap-2">
                 <input
                   type="number"
-                  placeholder="PRICE"
+                  placeholder="Цена"
                   value={customDishPrice}
                   onChange={(e) => setCustomDishPrice(e.target.value)}
-                  className="w-1/3 p-2 bg-black/50 border border-gray-700 text-white font-mono text-sm placeholder:text-gray-700 focus:border-neon-blue outline-none"
+                  className="w-1/3 retro-input"
                 />
                 <button 
                   onClick={addCustomItem}
                   disabled={!customDishName}
-                  className="flex-1 bg-neon-blue/20 text-neon-blue border border-neon-blue hover:bg-neon-blue hover:text-black font-bold uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-[#a0d8ef] text-white border-2 border-[#2c2c54] rounded-lg font-bold uppercase hover:shadow-md disabled:opacity-50"
                 >
-                  ADD
+                  Добавить
                 </button>
               </div>
             </div>
@@ -264,13 +266,13 @@ export default function NewOrderPage() {
         </div>
 
         {/* Menu Search */}
-        <div className="space-y-4 pt-4 border-t border-gray-800">
+        <div className="space-y-4 pt-4 border-t-2 border-[#e6e6fa] bg-white/50 p-2 rounded-xl">
           <input
             type="text"
-            placeholder="SEARCH DATABASE..."
+            placeholder="ПОИСК ПО МЕНЮ..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-black/50 border border-neon-blue/30 text-white py-2 px-4 text-sm font-mono uppercase placeholder:text-gray-600 focus:border-neon-pink focus:outline-none clip-path-input"
+            className="w-full retro-input uppercase"
           />
 
           <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
@@ -278,10 +280,10 @@ export default function NewOrderPage() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`whitespace-nowrap px-3 py-1 text-[10px] font-bold uppercase tracking-widest transition-colors border ${
+                className={`whitespace-nowrap px-3 py-1 text-[10px] font-bold uppercase border-2 rounded-full transition-all ${
                   selectedCategory === cat
-                    ? 'bg-neon-pink text-black border-neon-pink'
-                    : 'bg-transparent text-gray-400 border-gray-700 hover:border-white hover:text-white'
+                    ? 'bg-[#ffb7c5] text-white border-[#2c2c54] shadow-sm'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-[#ffb7c5]'
                 }`}
               >
                 {cat}
@@ -295,24 +297,24 @@ export default function NewOrderPage() {
               const qty = inCart ? inCart.quantity : 0
               
               return (
-                <div key={item.id} className="flex justify-between items-center bg-black/40 p-3 border border-gray-800 hover:border-neon-blue/50 transition-colors group">
+                <div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-lg border-2 border-transparent hover:border-[#a0d8ef] shadow-sm transition-all">
                   <div className="flex-1">
-                    <p className="font-bold text-white text-sm uppercase font-mono group-hover:text-neon-blue transition-colors">{item.title}</p>
-                    <p className="text-[10px] text-gray-500">{item.price} ¥</p>
+                    <p className="font-bold text-[#2c2c54] text-sm uppercase">{item.title}</p>
+                    <p className="text-[10px] text-gray-500">{item.price} ₽</p>
                   </div>
                   
                   {qty === 0 ? (
                     <button
                       onClick={() => addToCart(item)}
-                      className="p-2 text-gray-500 hover:text-neon-pink transition-colors"
+                      className="p-2 text-[#a0d8ef] hover:text-[#ffb7c5] transition-colors bg-[#f0f8ff] rounded-full"
                     >
                       <Plus size={18} />
                     </button>
                   ) : (
-                    <div className="flex items-center gap-3 bg-neon-blue/10 px-2 py-1 border border-neon-blue/30">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-neon-blue hover:text-white"><Minus size={14} /></button>
-                      <span className="font-bold text-white font-mono w-4 text-center">{qty}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-neon-blue hover:text-white"><Plus size={14} /></button>
+                    <div className="flex items-center gap-3 bg-[#f0f8ff] px-2 py-1 rounded-full border border-[#a0d8ef]">
+                      <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-[#a0d8ef]"><Minus size={14} /></button>
+                      <span className="font-bold text-[#2c2c54] w-4 text-center">{qty}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-[#a0d8ef]"><Plus size={14} /></button>
                     </div>
                   )}
                 </div>
@@ -323,22 +325,22 @@ export default function NewOrderPage() {
       </div>
 
       {totalItems > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#01012b] border-t border-neon-pink/50 p-4 shadow-[0_-5px_20px_rgba(255,42,109,0.2)] pb-safe z-20">
-          <div className="flex justify-between items-center mb-4 font-mono">
-            <span className="text-gray-400 text-xs uppercase tracking-widest">{totalItems} UNITS</span>
-            <span className="font-bold text-xl text-neon-pink">
-              {cart.reduce((sum, i) => sum + i.price * i.quantity, 0)} ¥
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t-4 border-[#ffb7c5] p-4 shadow-lg pb-safe z-30">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-gray-400 text-xs uppercase font-bold">{totalItems} ПОЗИЦИЙ</span>
+            <span className="font-bold text-xl text-[#2c2c54]" style={{ fontFamily: 'var(--font-retro)' }}>
+              {cart.reduce((sum, i) => sum + i.price * i.quantity, 0)} ₽
             </span>
           </div>
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="w-full py-3 bg-neon-pink text-black font-bold uppercase tracking-[0.2em] shadow-[0_0_15px_var(--neon-pink)] hover:bg-white hover:text-neon-pink transition-all flex items-center justify-center gap-2 cyber-button-hot"
+            className="w-full retro-button text-lg flex items-center justify-center gap-2"
           >
-            {submitting ? 'PROCESSING...' : (
+            {submitting ? 'ОФОРМЛЯЕМ...' : (
               <>
                 <ShoppingCart size={20} />
-                CONFIRM ORDER
+                СОЗДАТЬ ЗАКАЗ
               </>
             )}
           </button>

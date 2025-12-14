@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { PlusCircle, BookOpen, LogOut, Pencil, User, Terminal } from 'lucide-react'
+import { PlusCircle, BookOpen, LogOut, Pencil, User, Coffee } from 'lucide-react'
+import Assistant from '@/components/Assistant'
 
 // Types
 type Order = {
@@ -52,81 +53,91 @@ export default function Dashboard() {
     router.push('/login')
   }
 
-  if (loading) return <div className="p-4 text-center text-neon-blue font-mono animate-pulse">LOADING SYSTEM...</div>
+  const dashboardMessages = [
+    `Привет, ${user}! Готов к работе?`,
+    "Проверяю столики...",
+    "Не забудь выпить воды!",
+    "Кажется, новые гости!",
+    "Все работает отлично.",
+    "Удачи, семпай! ♡"
+  ]
+
+  if (loading) return <div className="p-4 text-center text-[#2c2c54] font-bold animate-pulse">ЗАГРУЗКА...</div>
 
   if (!user) return null
 
   return (
     <div className="min-h-screen pb-20 relative overflow-x-hidden">
-      {/* Holographic Assistant (Fixed Bottom Right) */}
-      <div className="fixed bottom-0 right-[-20px] z-0 pointer-events-none opacity-80 mix-blend-screen h-[400px] w-[300px]">
-         {/* Holographic Assistant */}
-         {/* eslint-disable-next-line @next/next/no-img-element */}
-         <img 
+      <div className="scanlines"></div>
+
+      {/* Assistant (Background Layer) */}
+      <div className="fixed bottom-0 right-[-20px] z-0 h-[350px] w-[250px] pointer-events-auto opacity-90">
+         <Assistant 
             src="/waifu-dashboard.png" 
-            alt="Assistant" 
-            className="h-full w-full object-contain drop-shadow-[0_0_20px_rgba(5,217,232,0.4)]"
-          />
+            messages={dashboardMessages}
+            bubblePosition="top-left"
+            className="h-full w-full"
+         />
       </div>
 
-      <header className="sticky top-0 z-10 bg-[#01012b]/90 backdrop-blur-md p-4 shadow-[0_2px_10px_rgba(5,217,232,0.2)] flex justify-between items-center border-b border-neon-blue/30">
+      <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md p-4 shadow-sm flex justify-between items-center border-b-2 border-[#e6e6fa]">
         <div className="flex items-center gap-3">
-          <Terminal size={24} className="text-neon-pink" />
+          <Coffee size={24} className="text-[#ffb7c5]" />
           <div>
-            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-neon-purple tracking-widest uppercase" style={{ fontFamily: 'var(--font-orbitron)' }}>
-              TANUKI<span className="text-neon-blue">2077</span>
+            <h1 className="text-xl text-[#2c2c54]" style={{ fontFamily: 'var(--font-retro)' }}>
+              TANUKI<span className="text-[#a0d8ef]">CAFE</span>
             </h1>
-            <p className="text-[10px] text-neon-blue font-mono tracking-wider flex items-center gap-1">
-              <User size={10} /> OPERATOR: {user?.toUpperCase()}
+            <p className="text-xs text-gray-500 font-bold flex items-center gap-1">
+              <User size={10} /> ОФИЦИАНТ: {user?.toUpperCase()}
             </p>
           </div>
         </div>
-        <button onClick={handleLogout} className="text-neon-blue hover:text-neon-pink transition-colors">
+        <button onClick={handleLogout} className="text-gray-400 hover:text-red-400 transition-colors">
           <LogOut size={24} />
         </button>
       </header>
 
       <main className="p-4 space-y-8 relative z-10">
         <div className="grid grid-cols-2 gap-4">
-          <Link href="/orders/new" className="group cyber-card p-6 flex flex-col items-center justify-center rounded-sm hover:scale-[1.02] transition-transform duration-300">
-            <PlusCircle size={40} className="mb-3 text-neon-pink group-hover:animate-spin-slow" />
-            <span className="font-bold text-neon-pink tracking-widest text-sm uppercase">New Order</span>
+          <Link href="/orders/new" className="group retro-card p-6 flex flex-col items-center justify-center bg-white hover:bg-[#fff0f5]">
+            <PlusCircle size={40} className="mb-3 text-[#ffb7c5] group-hover:scale-110 transition-transform" />
+            <span className="font-bold text-[#2c2c54] text-sm uppercase">Новый Заказ</span>
           </Link>
           
-          <Link href="/menu" className="group cyber-card p-6 flex flex-col items-center justify-center rounded-sm hover:scale-[1.02] transition-transform duration-300">
-            <BookOpen size={40} className="mb-3 text-neon-blue group-hover:animate-pulse" />
-            <span className="font-bold text-neon-blue tracking-widest text-sm uppercase">Menu DB</span>
+          <Link href="/menu" className="group retro-card p-6 flex flex-col items-center justify-center bg-white hover:bg-[#e0ffff]">
+            <BookOpen size={40} className="mb-3 text-[#a0d8ef] group-hover:scale-110 transition-transform" />
+            <span className="font-bold text-[#2c2c54] text-sm uppercase">Меню</span>
           </Link>
 
-          <Link href="/admin" className="col-span-2 group cyber-card p-4 flex flex-row items-center justify-center gap-3 rounded-sm hover:scale-[1.02] transition-transform duration-300 border-neon-purple/50">
-            <Pencil size={24} className="text-neon-purple" />
-            <span className="font-bold text-neon-purple tracking-widest text-sm uppercase">System Config (Admin)</span>
+          <Link href="/admin" className="col-span-2 group retro-card p-4 flex flex-row items-center justify-center gap-3 bg-white hover:bg-[#f3e5f5]">
+            <Pencil size={24} className="text-[#dcd0ff]" />
+            <span className="font-bold text-[#2c2c54] text-sm uppercase">Управление Меню (Админ)</span>
           </Link>
         </div>
 
         <div>
-          <h2 className="mb-4 text-lg font-bold text-white uppercase tracking-[0.2em] flex items-center gap-2">
-            <span className="w-2 h-2 bg-neon-blue rounded-full animate-ping"></span>
-            Active Missions
+          <h2 className="mb-4 text-lg text-[#2c2c54] uppercase flex items-center gap-2 font-bold bg-white/50 inline-block px-3 py-1 rounded-lg">
+            <span className="w-2 h-2 bg-[#ffb7c5] rounded-full animate-pulse"></span>
+            Активные Столы
           </h2>
           
           {orders.length === 0 ? (
-            <div className="text-gray-500 text-center py-12 border border-dashed border-gray-700 rounded-lg">
-              <p className="font-mono text-xs">NO ACTIVE ORDERS DETECTED</p>
+            <div className="text-gray-400 text-center py-12 border-2 border-dashed border-[#e6e6fa] rounded-xl bg-white/50">
+              <p className="font-bold text-sm">НЕТ АКТИВНЫХ ЗАКАЗОВ</p>
             </div>
           ) : (
             <div className="grid gap-4">
               {orders.map((order) => (
                 <Link key={order.id} href={`/orders/${order.id}`}>
-                  <div className="cyber-card p-4 flex justify-between items-center hover:bg-white/5 transition-colors">
+                  <div className="retro-card p-4 flex justify-between items-center hover:bg-white transition-colors bg-white/90">
                     <div>
-                      <span className="block text-[10px] text-neon-blue uppercase tracking-wider font-mono">Table Unit</span>
-                      <span className="text-3xl font-bold text-white font-mono glitch-text" data-text={order.table_number}>{order.table_number}</span>
+                      <span className="block text-[10px] text-gray-400 uppercase font-bold">Столик №</span>
+                      <span className="text-3xl font-bold text-[#2c2c54]" style={{ fontFamily: 'var(--font-retro)' }}>{order.table_number}</span>
                     </div>
                     <div className="text-right">
-                      <span className="block text-[10px] text-gray-400 uppercase tracking-wider mb-1">Status</span>
-                      <span className="inline-block px-3 py-1 text-[10px] font-bold text-black bg-neon-blue uppercase tracking-widest clip-path-badge">
-                        {order.status === 'active' ? 'ACTIVE' : order.status}
+                      <span className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Статус</span>
+                      <span className={`inline-block px-3 py-1 text-[10px] font-bold rounded-full border border-[#2c2c54] ${order.status === 'active' ? 'bg-[#a0d8ef] text-white' : 'bg-gray-100'}`}>
+                        {order.status === 'active' ? 'АКТИВЕН' : order.status}
                       </span>
                     </div>
                   </div>
