@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, Circle, Clock } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Circle, Clock, PlusCircle, Trash2 } from 'lucide-react'
 import { useParams } from 'next/navigation'
 
 type OrderItem = {
@@ -13,8 +13,8 @@ type OrderItem = {
   quantity: number
   served: boolean
   created_at: string
-  item_title?: string // New denormalized field
-  item_price?: number // New denormalized field
+  item_title?: string
+  item_price?: number
   menu_items: {
     title: string
     price: number
@@ -96,6 +96,21 @@ export default function OrderPage() {
     }
   }
 
+  const deleteItem = async (itemId: string) => {
+    if (!confirm('Удалить эту позицию из заказа?')) return
+
+    const { error } = await supabase
+      .from('order_items')
+      .delete()
+      .eq('id', itemId)
+
+    if (error) {
+      alert('Ошибка удаления: ' + error.message)
+    } else {
+      setItems(items.filter(i => i.id !== itemId))
+    }
+  }
+
   const closeOrder = async () => {
     if (!confirm('Закрыть стол?')) return
 
@@ -152,52 +167,82 @@ export default function OrderPage() {
       </header>
 
       <div className="p-4 space-y-4 max-w-lg mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          {items.map((item) => {
-            const timer = getTimerStatus(item.created_at)
-            
-            // Prefer denormalized title, fallback to joined title, finally unknown
-            const title = item.item_title || item.menu_items?.title || 'Неизвестное блюдо'
+        {order.status === 'active' && (
+          <Link 
+            href={`/orders/${id}/add`}
+            className="w-full flex items-center justify-center gap-2 bg-orange-100 text-orange-700 py-3 rounded-xl font-semibold hover:bg-orange-200 active:scale-95 transition-all"
+          >
+            <PlusCircle size={20} />
+            Добавить блюда
+          </Link>
+        )}
 
-            return (
-              <div 
-                key={item.id} 
-                onClick={() => toggleServed(item.id, item.served)}
-                className={`flex items-start p-4 border-b border-gray-100 last:border-0 cursor-pointer transition-colors ${
-                  item.served ? 'bg-gray-50' : 'hover:bg-gray-50 active:bg-gray-100'
-                }`}
-              >
-                <div className="mt-1 mr-4">
-                  {item.served ? (
-                    <CheckCircle className="text-green-500" size={24} />
-                  ) : (
-                    <Circle className="text-gray-300" size={24} />
-                  )}
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <p className={`font-medium text-lg leading-tight ${item.served ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
-                      {title}
-                    </p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          {items.length === 0 ? (
+             <div className="p-8 text-center text-gray-400">В заказе пока нет блюд</div>
+          ) : (
+            items.map((item) => {
+              const timer = getTimerStatus(item.created_at)
+              const title = item.item_title || item.menu_items?.title || 'Неизвестное блюдо'
+
+              return (
+                <div 
+                  key={item.id} 
+                  className={`flex items-start p-4 border-b border-gray-100 last:border-0 transition-colors ${
+                    item.served ? 'bg-gray-50' : 'bg-white'
+                  }`}
+                >
+                  {/* Click area for toggling served status */}
+                  <div 
+                    onClick={() => toggleServed(item.id, item.served)}
+                    className="flex-1 flex items-start cursor-pointer"
+                  >
+                    <div className="mt-1 mr-4">
+                      {item.served ? (
+                        <CheckCircle className="text-green-500" size={24} />
+                      ) : (
+                        <Circle className="text-gray-300" size={24} />
+                      )}
+                    </div>
                     
-                    {!item.served && (
-                      <div className={`ml-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-mono font-bold ${timer.bg} ${timer.color}`}>
-                        <Clock size={12} />
-                        {timer.text}
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <p className={`font-medium text-lg leading-tight ${item.served ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                          {title}
+                        </p>
+                        
+                        {!item.served && (
+                          <div className={`ml-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-mono font-bold ${timer.bg} ${timer.color}`}>
+                            <Clock size={12} />
+                            {timer.text}
+                          </div>
+                        )}
                       </div>
-                    )}
+                      
+                      {item.quantity > 1 && (
+                        <span className="inline-block bg-orange-100 text-orange-800 text-xs font-bold px-2 py-0.5 rounded-full mt-2">
+                          x{item.quantity}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  
-                  {item.quantity > 1 && (
-                    <span className="inline-block bg-orange-100 text-orange-800 text-xs font-bold px-2 py-0.5 rounded-full mt-2">
-                      x{item.quantity}
-                    </span>
+
+                  {/* Delete button (only for unserved items) */}
+                  {!item.served && order.status === 'active' && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteItem(item.id)
+                      }}
+                      className="ml-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 size={20} />
+                    </button>
                   )}
                 </div>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
 
         {order.status === 'active' && (
