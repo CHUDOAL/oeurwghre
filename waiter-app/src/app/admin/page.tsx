@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { ArrowLeft, Save, Image as ImageIcon, Crop, X } from 'lucide-react'
-import Cropper from 'react-easy-crop'
 import { getCroppedImg } from '@/lib/cropImage'
+import dynamic from 'next/dynamic'
+
+// Dynamically import Cropper with SSR disabled to prevent build errors
+const Cropper = dynamic(() => import('react-easy-crop'), { ssr: false })
 
 type MenuItem = {
   id: string
@@ -32,14 +35,22 @@ export default function AdminPage() {
   }, [])
 
   const fetchData = async () => {
-    const [menuRes, imagesRes] = await Promise.all([
-      supabase.from('menu_items').select('*').order('title'),
-      fetch('/api/images').then(r => r.json())
-    ])
+    try {
+      const [menuRes, imagesRes] = await Promise.all([
+        supabase.from('menu_items').select('*').order('title'),
+        fetch('/api/images').then(r => {
+           if (!r.ok) throw new Error('Failed to fetch images')
+           return r.json()
+        }).catch(() => []) // Fallback to empty array on error
+      ])
 
-    if (menuRes.data) setItems(menuRes.data)
-    if (Array.isArray(imagesRes)) setImages(imagesRes)
-    setLoading(false)
+      if (menuRes.data) setItems(menuRes.data)
+      if (Array.isArray(imagesRes)) setImages(imagesRes)
+    } catch (error) {
+      console.error('Error loading admin data:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSelectImageToCrop = (imageName: string) => {
@@ -92,8 +103,9 @@ export default function AdminPage() {
     i.title.toLowerCase().includes(filter.toLowerCase())
   )
 
-  if (loading) return <div className="p-10 text-center">Загрузка...</div>
-
+  // Avoid hydration mismatch by showing loading or empty state initially if needed,
+  // but here we just return the layout.
+  
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col h-screen">
       <header className="bg-white p-4 shadow-sm flex items-center justify-between shrink-0 z-10">
@@ -121,30 +133,34 @@ export default function AdminPage() {
             />
           </div>
           <div className="overflow-y-auto flex-1 p-2 space-y-1">
-            {filteredItems.map(item => (
-              <button
-                key={item.id}
-                onClick={() => setSelectedItem(item)}
-                className={`w-full text-left p-3 rounded-lg flex items-center gap-3 transition-colors ${
-                  selectedItem?.id === item.id 
-                    ? 'bg-orange-50 border-orange-200 border text-orange-900' 
-                    : 'hover:bg-gray-50 text-gray-700'
-                }`}
-              >
-                <div className="w-10 h-10 rounded bg-gray-200 shrink-0 overflow-hidden relative">
-                  {item.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImageIcon className="w-5 h-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-400" />
-                  )}
-                </div>
-                <div className="truncate">
-                  <div className="font-medium truncate">{item.title}</div>
-                  <div className="text-xs text-gray-400">{item.category}</div>
-                </div>
-              </button>
-            ))}
+             {loading && items.length === 0 ? (
+                 <div className="p-4 text-center text-gray-400">Загрузка...</div>
+             ) : (
+                filteredItems.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => setSelectedItem(item)}
+                    className={`w-full text-left p-3 rounded-lg flex items-center gap-3 transition-colors ${
+                      selectedItem?.id === item.id 
+                        ? 'bg-orange-50 border-orange-200 border text-orange-900' 
+                        : 'hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded bg-gray-200 shrink-0 overflow-hidden relative">
+                      {item.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-5 h-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-400" />
+                      )}
+                    </div>
+                    <div className="truncate">
+                      <div className="font-medium truncate">{item.title}</div>
+                      <div className="text-xs text-gray-400">{item.category}</div>
+                    </div>
+                  </button>
+                ))
+             )}
           </div>
         </div>
 
