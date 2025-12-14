@@ -27,13 +27,13 @@ export default function Assistant({ src, alt = "Assistant", messages, className 
     setTimeout(() => setShowBubble(false), 4000)
   }
 
-  // Random idle speech (optional)
+  // Random idle speech
   useEffect(() => {
     const interval = setInterval(() => {
-      if (Math.random() > 0.95) { // Less frequent
+      if (Math.random() > 0.9) { 
         speak()
       }
-    }, 10000)
+    }, 15000)
     return () => clearInterval(interval)
   }, [])
 
@@ -42,14 +42,14 @@ export default function Assistant({ src, alt = "Assistant", messages, className 
     bottom: bubblePosition.includes('bottom') ? '100%' : 'auto',
     left: bubblePosition.includes('left') ? '0px' : 'auto',
     right: bubblePosition.includes('right') ? '0px' : 'auto',
-    marginBottom: '15px'
+    marginBottom: '20px'
   }
 
   return (
-    <div className={`relative cursor-pointer transition-all hover:scale-105 ${className}`} onClick={speak}>
+    <div className={`relative cursor-pointer transition-all hover:brightness-110 ${className}`} onClick={speak}>
       {/* Speech Bubble */}
       {showBubble && (
-        <div className="comic-bubble z-50 whitespace-pre-wrap" style={bubbleStyle}>
+        <div className="modern-bubble z-50 whitespace-pre-wrap" style={bubbleStyle}>
           {currentMessage}
         </div>
       )}
@@ -60,7 +60,7 @@ export default function Assistant({ src, alt = "Assistant", messages, className 
         <img 
           src={src} 
           alt={alt} 
-          className="w-full h-full object-contain filter drop-shadow-md"
+          className="w-full h-full object-contain drop-shadow-xl"
         />
       </div>
     </div>

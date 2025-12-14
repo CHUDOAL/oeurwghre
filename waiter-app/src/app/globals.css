@@ -1,183 +1,142 @@
 @import "tailwindcss";
 
 :root {
-  --anime-pink: #ffb7c5;
-  --anime-blue: #a0d8ef;
-  --anime-purple: #e6e6fa;
-  --anime-cream: #fffdd0;
-  --anime-dark: #2c2c54;
-  --anime-text: #4a4a4a;
-  --retro-overlay: rgba(255, 255, 255, 0.1);
+  --primary: #6366f1; /* Indigo-500 */
+  --secondary: #ec4899; /* Pink-500 */
+  --accent: #8b5cf6; /* Violet-500 */
+  --bg-color: #f8fafc; /* Slate-50 */
+  --card-bg: #ffffff;
+  --text-main: #1e293b; /* Slate-800 */
+  --text-muted: #64748b; /* Slate-500 */
 }
 
 @theme inline {
-  --color-anime-pink: var(--anime-pink);
-  --color-anime-blue: var(--anime-blue);
-  --color-anime-purple: var(--anime-purple);
-  --color-anime-cream: var(--anime-cream);
-  --color-anime-dark: var(--anime-dark);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-bg-color: var(--bg-color);
   
-  --font-retro: 'Times New Roman', serif;
-  --font-soft: 'Verdana', sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
 }
 
 body {
-  background-color: var(--anime-purple);
-  background-image: 
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(230, 230, 250, 0.8)),
-    url('https://www.transparenttextures.com/patterns/stardust.png'); /* Subtle texture */
-  color: var(--anime-text);
-  font-family: var(--font-soft);
+  background-color: var(--bg-color);
+  /* Soft dreamy gradient background */
+  background-image: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+  color: var(--text-main);
+  font-family: var(--font-sans);
   overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-retro);
-  font-weight: bold;
-  letter-spacing: 0.05em;
-  text-shadow: 2px 2px 0px rgba(255, 183, 197, 0.5);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-main);
 }
 
-/* 90s TV Scanlines Effect */
-.scanlines {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0),
-    rgba(255, 255, 255, 0) 50%,
-    rgba(0, 0, 0, 0.05) 50%,
-    rgba(0, 0, 0, 0.05)
-  );
-  background-size: 100% 4px;
-  pointer-events: none;
-  z-index: 50;
-  opacity: 0.6;
-}
-
-/* Bloom / Glow for dreamy effect */
-.dreamy-glow {
-  filter: drop-shadow(0 0 8px rgba(255, 183, 197, 0.6));
-}
-
-/* Retro Anime Card */
-.retro-card {
-  background: rgba(255, 255, 255, 0.9);
-  border: 2px solid var(--anime-dark);
-  border-radius: 12px;
-  box-shadow: 4px 4px 0px var(--anime-blue);
-  transition: all 0.2s ease;
+/* Anime-style soft card */
+.anime-card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
-.retro-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px var(--anime-pink);
+.anime-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.2);
 }
 
-/* Retro Button */
-.retro-button {
-  background: var(--anime-pink);
+/* Modern Pill Button */
+.anime-button {
+  background: linear-gradient(45deg, var(--primary), var(--accent));
   color: white;
-  border: 2px solid var(--anime-dark);
-  border-radius: 20px;
-  padding: 10px 20px;
-  font-family: var(--font-retro);
-  font-weight: bold;
-  text-transform: uppercase;
-  box-shadow: 2px 2px 0px var(--anime-dark);
-  transition: all 0.1s ease;
+  border-radius: 9999px;
+  padding: 12px 24px;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.retro-button:active {
-  transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px var(--anime-dark);
+.anime-button:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
 
-.retro-button-secondary {
-  background: var(--anime-blue);
+.anime-button:active {
+  transform: scale(0.98);
 }
 
-/* Retro Input */
-.retro-input {
+/* Input Fields */
+.anime-input {
   background: white;
-  border: 2px solid var(--anime-dark);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-family: var(--font-soft);
-  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.1);
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  width: 100%;
+  transition: all 0.2s;
+  color: var(--text-main);
 }
-.retro-input:focus {
+
+.anime-input:focus {
   outline: none;
-  border-color: var(--anime-pink);
-  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.1), 0 0 0 2px rgba(255, 183, 197, 0.5);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 /* Floating Animation */
 .animate-float {
-  animation: float 4s ease-in-out infinite;
+  animation: float 6s ease-in-out infinite;
 }
 
 @keyframes float {
   0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-15px); }
   100% { transform: translateY(0px); }
 }
 
-/* Speech Bubble (Comic Style) */
-.comic-bubble {
+/* Modern Speech Bubble */
+.modern-bubble {
   position: absolute;
   background: white;
-  border: 2px solid var(--anime-dark);
-  padding: 15px;
-  border-radius: 15px;
-  color: var(--anime-dark);
-  font-family: var(--font-soft);
+  padding: 16px;
+  border-radius: 20px;
+  border-bottom-left-radius: 4px;
+  color: var(--text-main);
   font-size: 0.9rem;
-  max-width: 200px;
-  box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
-  animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.comic-bubble::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 20px;
-  border-width: 10px 10px 0;
-  border-style: solid;
-  border-color: var(--anime-dark) transparent transparent transparent;
-}
-.comic-bubble::before {
-  content: '';
-  position: absolute;
-  bottom: -6px;
-  left: 23px;
-  border-width: 8px 8px 0;
-  border-style: solid;
-  border-color: white transparent transparent transparent;
-  z-index: 1;
+  font-weight: 500;
+  max-width: 220px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.05);
+  animation: pop-up 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-@keyframes pop-in {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
+@keyframes pop-up {
+  from { opacity: 0; transform: translateY(10px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Status Badge */
-.retro-badge {
-  border: 1px solid var(--anime-dark);
-  border-radius: 12px;
-  padding: 2px 8px;
-  font-size: 0.7rem;
-  font-weight: bold;
+/* Status Badges */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
-  background: white;
-  box-shadow: 1px 1px 0px var(--anime-dark);
+  letter-spacing: 0.05em;
 }
-.retro-badge-active {
-  background: var(--anime-blue);
-  color: white;
+.status-active {
+  background: #dbeafe;
+  color: #2563eb;
+}
+.status-closed {
+  background: #f1f5f9;
+  color: #64748b;
 }
