@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(req: Request) {
   try {
@@ -14,14 +13,29 @@ export async function POST(req: Request) {
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '')
     const buffer = Buffer.from(base64Data, 'base64')
 
-    const filePath = path.join(process.cwd(), 'public/menu-images', filename)
-    
-    fs.writeFileSync(filePath, buffer)
+    // Upload to Supabase Storage
+    const { data, error } = await supabase
+      .storage
+      .from('menu-images')
+      .upload(filename, buffer, {
+        contentType: 'image/jpeg',
+        upsert: true
+      })
 
-    return NextResponse.json({ success: true, path: `/menu-images/${filename}` })
+    if (error) {
+      console.error('Supabase storage upload error:', error)
+      return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 })
+    }
+
+    // Get Public URL
+    const { data: { publicUrl } } = supabase
+      .storage
+      .from('menu-images')
+      .getPublicUrl(filename)
+
+    return NextResponse.json({ success: true, path: publicUrl })
   } catch (error) {
     console.error('Save error:', error)
     return NextResponse.json({ error: 'Failed to save image' }, { status: 500 })
   }
 }
-

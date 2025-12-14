@@ -16,47 +16,56 @@ export default function LoginPage() {
     const user = username.trim().toLowerCase()
 
     if (validUsers.includes(user)) {
-      // Simple "auth" by storing user in localStorage
       localStorage.setItem('waiter_user', user)
-      document.cookie = `waiter_user=${user}; path=/; max-age=86400` // Also set cookie for middleware if needed later
+      document.cookie = `waiter_user=${user}; path=/; max-age=86400`
       router.push('/')
       router.refresh()
     } else {
-      setError('Неверный логин. Используйте gross или maxim')
+      setError('ACCESS DENIED. TRY "gross" OR "maxim"')
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
-        <h1 className="mb-6 text-center text-2xl font-bold text-gray-800">Вход для официантов</h1>
+    <div className="flex min-h-screen items-center justify-center p-4 relative overflow-hidden">
+      {/* Anime Style Decor Elements */}
+      <div className="absolute top-10 left-10 w-32 h-32 border-l-2 border-t-2 border-neon-pink opacity-50"></div>
+      <div className="absolute bottom-10 right-10 w-32 h-32 border-r-2 border-b-2 border-neon-blue opacity-50"></div>
+      
+      <div className="w-full max-w-md cyber-card p-8 relative z-10">
+        <h1 className="mb-8 text-center text-3xl font-bold text-white tracking-widest glitch-text" data-text="SYSTEM LOGIN">
+          SYSTEM LOGIN
+        </h1>
         
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Логин</label>
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-neon-blue uppercase tracking-widest">Identify Yourself</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-gray-900 placeholder:text-gray-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
-              placeholder="Введите логин (например, gross)"
+              className="w-full bg-black/50 border border-gray-700 text-white p-3 rounded-none focus:border-neon-pink focus:outline-none focus:ring-1 focus:ring-neon-pink transition-all font-mono text-lg tracking-wider"
+              placeholder="CODENAME"
               required
             />
           </div>
 
           {error && (
-            <div className="text-sm text-red-500">
-              {error}
+            <div className="text-sm text-red-500 font-bold tracking-wide animate-pulse border border-red-500/50 p-2 bg-red-500/10 text-center">
+              ⚠ {error}
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full rounded-md bg-orange-500 px-4 py-2 text-white hover:bg-orange-600"
+            className="w-full py-3 bg-neon-pink/10 border border-neon-pink text-neon-pink hover:bg-neon-pink hover:text-black font-bold uppercase tracking-[0.2em] transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,42,109,0.6)]"
           >
-            Войти
+            Initialize
           </button>
         </form>
+        
+        <div className="mt-6 text-center text-[10px] text-gray-500 font-mono">
+          SECURE CONNECTION ESTABLISHED // V.2026
+        </div>
       </div>
     </div>
   )

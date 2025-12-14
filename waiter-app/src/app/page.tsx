@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { PlusCircle, BookOpen, LogOut, Pencil } from 'lucide-react'
+import { PlusCircle, BookOpen, LogOut, Pencil, User, Terminal } from 'lucide-react'
 
 // Types
 type Order = {
@@ -12,6 +12,7 @@ type Order = {
   table_number: string
   status: string
   created_at: string
+  username?: string
 }
 
 export default function Dashboard() {
@@ -33,26 +34,13 @@ export default function Dashboard() {
   }, [router])
 
   const fetchOrders = async (currentUser: string) => {
-    // We filter by a custom 'user_id' column that we will now treat as the username string
-    // Note: You might need to update the DB schema if user_id is UUID only. 
-    // Ideally, we'd alter the column type, but for now let's try to query.
-    // If user_id is UUID, this will fail. We should probably add a 'username' column or just filter in client if forced.
-    // Let's assume we can add a text column or repurpose. 
-    // Actually, to keep it simple without complex migrations, let's filter client-side or use a new metadata column.
-    // Correction: We will modify the table to allow text in user_id OR add a 'username' column.
-    
-    // Attempt to query. If user_id is UUID, we need to fix it.
     const { data, error } = await supabase
       .from('orders')
       .select('*')
       .eq('status', 'active')
-      // .eq('username', currentUser) // We need to add this column!
       .order('created_at', { ascending: false })
     
     if (data) {
-      // Temporary client-side filtering until we add the column properly
-      // But wait, we can't save the username if the column doesn't exist.
-      // We will assume we'll update the schema next.
       const userOrders = data.filter((o: any) => o.username === currentUser)
       setOrders(userOrders)
     }
@@ -64,52 +52,70 @@ export default function Dashboard() {
     router.push('/login')
   }
 
-  if (loading) return <div className="p-4 text-center">Загрузка...</div>
+  if (loading) return <div className="p-4 text-center text-neon-blue font-mono animate-pulse">LOADING SYSTEM...</div>
 
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="sticky top-0 z-10 bg-white p-4 shadow-sm flex justify-between items-center">
-        <div>
-          <h1 className="text-xl font-bold text-orange-600">Tanuki Waiter</h1>
-          <p className="text-xs text-gray-500">Привет, {user}!</p>
+    <div className="min-h-screen pb-20 relative">
+      <header className="sticky top-0 z-10 bg-[#01012b]/90 backdrop-blur-md p-4 shadow-[0_2px_10px_rgba(5,217,232,0.2)] flex justify-between items-center border-b border-neon-blue/30">
+        <div className="flex items-center gap-3">
+          <Terminal size={24} className="text-neon-pink" />
+          <div>
+            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-neon-purple tracking-widest uppercase" style={{ fontFamily: 'var(--font-orbitron)' }}>
+              TANUKI<span className="text-neon-blue">2077</span>
+            </h1>
+            <p className="text-[10px] text-neon-blue font-mono tracking-wider flex items-center gap-1">
+              <User size={10} /> OPERATOR: {user?.toUpperCase()}
+            </p>
+          </div>
         </div>
-        <button onClick={handleLogout} className="text-gray-500 hover:text-red-500">
-          <LogOut size={20} />
+        <button onClick={handleLogout} className="text-neon-blue hover:text-neon-pink transition-colors">
+          <LogOut size={24} />
         </button>
       </header>
 
-      <main className="p-4 space-y-6">
+      <main className="p-4 space-y-8 relative z-10">
         <div className="grid grid-cols-2 gap-4">
-          <Link href="/orders/new" className="flex flex-col items-center justify-center rounded-xl bg-orange-100 p-6 text-orange-700 shadow-sm active:scale-95 transition-transform">
-            <PlusCircle size={32} className="mb-2" />
-            <span className="font-semibold">Новый заказ</span>
+          <Link href="/orders/new" className="group cyber-card p-6 flex flex-col items-center justify-center rounded-sm hover:scale-[1.02] transition-transform duration-300">
+            <PlusCircle size={40} className="mb-3 text-neon-pink group-hover:animate-spin-slow" />
+            <span className="font-bold text-neon-pink tracking-widest text-sm uppercase">New Order</span>
           </Link>
           
-          <Link href="/menu" className="flex flex-col items-center justify-center rounded-xl bg-green-100 p-6 text-green-700 shadow-sm active:scale-95 transition-transform">
-            <BookOpen size={32} className="mb-2" />
-            <span className="font-semibold">Меню</span>
+          <Link href="/menu" className="group cyber-card p-6 flex flex-col items-center justify-center rounded-sm hover:scale-[1.02] transition-transform duration-300">
+            <BookOpen size={40} className="mb-3 text-neon-blue group-hover:animate-pulse" />
+            <span className="font-bold text-neon-blue tracking-widest text-sm uppercase">Menu DB</span>
+          </Link>
+
+          <Link href="/admin" className="col-span-2 group cyber-card p-4 flex flex-row items-center justify-center gap-3 rounded-sm hover:scale-[1.02] transition-transform duration-300 border-neon-purple/50">
+            <Pencil size={24} className="text-neon-purple" />
+            <span className="font-bold text-neon-purple tracking-widest text-sm uppercase">System Config (Admin)</span>
           </Link>
         </div>
 
         <div>
-          <h2 className="mb-4 text-lg font-bold text-gray-800">Твои столы</h2>
+          <h2 className="mb-4 text-lg font-bold text-white uppercase tracking-[0.2em] flex items-center gap-2">
+            <span className="w-2 h-2 bg-neon-blue rounded-full animate-ping"></span>
+            Active Missions
+          </h2>
+          
           {orders.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">Нет активных заказов</p>
+            <div className="text-gray-500 text-center py-12 border border-dashed border-gray-700 rounded-lg">
+              <p className="font-mono text-xs">NO ACTIVE ORDERS DETECTED</p>
+            </div>
           ) : (
             <div className="grid gap-4">
               {orders.map((order) => (
                 <Link key={order.id} href={`/orders/${order.id}`}>
-                  <div className="rounded-lg bg-white p-4 shadow border border-gray-100 flex justify-between items-center">
+                  <div className="cyber-card p-4 flex justify-between items-center hover:bg-white/5 transition-colors">
                     <div>
-                      <span className="block text-xs text-gray-500">Стол</span>
-                      <span className="text-2xl font-bold text-gray-800">{order.table_number}</span>
+                      <span className="block text-[10px] text-neon-blue uppercase tracking-wider font-mono">Table Unit</span>
+                      <span className="text-3xl font-bold text-white font-mono glitch-text" data-text={order.table_number}>{order.table_number}</span>
                     </div>
                     <div className="text-right">
-                      <span className="block text-xs text-gray-500">Статус</span>
-                      <span className="inline-block rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-                        {order.status === 'active' ? 'Активен' : order.status}
+                      <span className="block text-[10px] text-gray-400 uppercase tracking-wider mb-1">Status</span>
+                      <span className="inline-block px-3 py-1 text-[10px] font-bold text-black bg-neon-blue uppercase tracking-widest clip-path-badge">
+                        {order.status === 'active' ? 'ACTIVE' : order.status}
                       </span>
                     </div>
                   </div>
