@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Minus, Plus, ShoppingCart, PlusCircle, Trash2 } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, Search, X } from 'lucide-react'
 
 type MenuItem = {
   id: string
@@ -30,10 +30,9 @@ export default function AddItemsToOrderPage() {
 
   const [items, setItems] = useState<MenuItem[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [categories, setCategories] = useState<string[]>(['All'])
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [categories, setCategories] = useState<string[]>(['Все'])
+  const [selectedCategory, setSelectedCategory] = useState('Все')
   const [submitting, setSubmitting] = useState(false)
 
   const [showCustomInput, setShowCustomInput] = useState(false)
@@ -48,10 +47,9 @@ export default function AddItemsToOrderPage() {
     const { data } = await supabase.from('menu_items').select('id, title, price, category, station')
     if (data) {
       setItems(data)
-      const uniqueCategories = Array.from(new Set(data.map((i) => i.category || 'Other')))
-      setCategories(['All', ...uniqueCategories])
+      const uniqueCategories = Array.from(new Set(data.map((i) => i.category || 'Прочее')))
+      setCategories(['Все', ...uniqueCategories])
     }
-    setLoading(false)
   }
 
   const addToCart = (item: MenuItem) => {
@@ -96,52 +94,26 @@ export default function AddItemsToOrderPage() {
   }
 
   const handleAddItems = async () => {
-    if (cart.length === 0) return alert('SELECT ITEMS')
+    if (cart.length === 0) return alert('Выберите блюда')
     
     setSubmitting(true)
     
-    const itemsToInsert = []
-
-    for (const item of cart) {
-      let menuItemId = item.id
-
-      if (item.isCustom) {
-        const { data: customMenu, error: customError } = await supabase
-          .from('menu_items')
-          .insert({
-            title: item.title,
-            price: item.price,
-            category: 'Custom',
-            description: 'Custom entry by waiter',
-            station: item.station
-          })
-          .select()
-          .single()
-        
-        if (customError) {
-          console.error('Failed to create custom item', customError)
-          continue
-        }
-        menuItemId = customMenu.id
-      }
-
-      itemsToInsert.push({
+    const itemsToInsert = cart.map(item => ({
         order_id: orderId,
-        menu_item_id: menuItemId,
+        menu_item_id: item.isCustom ? null : item.id,
         quantity: item.quantity,
         served: false,
         item_title: item.title,
         item_price: item.price,
         item_station: item.station
-      })
-    }
+    }))
 
     const { error: itemsError } = await supabase
       .from('order_items')
       .insert(itemsToInsert)
 
     if (itemsError) {
-      alert('Error adding items: ' + itemsError.message)
+      alert('Ошибка: ' + itemsError.message)
     } else {
       router.push(`/orders/${orderId}`)
     }
@@ -150,160 +122,162 @@ export default function AddItemsToOrderPage() {
 
   const filteredItems = items.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase())
-    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory
+    const matchesCategory = selectedCategory === 'Все' || item.category === selectedCategory
     return matchesSearch && matchesCategory
   })
 
   const totalItems = cart.reduce((a, b) => a + b.quantity, 0)
+  const totalPrice = cart.reduce((sum, i) => sum + i.price * i.quantity, 0)
 
   return (
-    <div className="min-h-screen pb-32 relative">
-      <header className="sticky top-0 z-10 bg-[#01012b]/90 backdrop-blur-md p-4 shadow-[0_2px_10px_rgba(5,217,232,0.2)] flex items-center gap-4 border-b border-neon-blue/30">
-        <Link href={`/orders/${orderId}`} className="text-neon-pink hover:text-white transition-colors">
-          <ArrowLeft size={24} />
+    <div className="min-h-screen bg-slate-50 pb-32">
+      
+      <header className="bg-white sticky top-0 z-30 border-b border-slate-100 px-4 py-3 flex items-center gap-4 safe-top">
+        <Link href={`/orders/${orderId}`} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+          <ArrowLeft size={20} />
         </Link>
-        <h1 className="text-xl font-bold text-white uppercase tracking-widest font-mono glitch-text" data-text="ADD SUPPLEMENTS">ADD SUPPLEMENTS</h1>
+        <h1 className="text-lg font-bold text-slate-900">Добавить блюда</h1>
       </header>
 
-      <div className="p-4 space-y-6 relative z-10">
+      <div className="p-4 max-w-2xl mx-auto space-y-6">
+        
+        {/* Cart Preview */}
         {cart.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="font-bold text-white text-xs uppercase tracking-widest">Selected Payload:</h3>
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold text-slate-500 uppercase px-1">Выбрано</h3>
             {cart.map((item) => (
-              <div key={item.id} className="flex justify-between items-center bg-neon-pink/10 p-3 border border-neon-pink/30 clip-path-badge">
-                <div className="flex-1">
-                  <p className="font-bold text-white font-mono text-sm uppercase">{item.title}</p>
-                  <p className="text-[10px] text-neon-pink">{item.price} ¥ {item.isCustom && '(MANUAL)'}</p>
+              <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
+                <div>
+                  <p className="font-bold text-slate-800">{item.title}</p>
+                  <p className="text-xs text-orange-500 font-bold mt-0.5">{item.price} ₽</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-neon-pink hover:bg-neon-pink hover:text-black transition-colors"><Minus size={16} /></button>
-                  <span className="font-bold text-white font-mono w-4 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-neon-pink hover:bg-neon-pink hover:text-black transition-colors"><Plus size={16} /></button>
+                <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-1">
+                  <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-600 active:scale-95 transition-transform"><Minus size={14} /></button>
+                  <span className="font-bold text-slate-700 w-4 text-center text-sm">{item.quantity}</span>
+                  <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-600 active:scale-95 transition-transform"><Plus size={14} /></button>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        <div className="space-y-2">
-          {!showCustomInput ? (
-            <button 
-              onClick={() => setShowCustomInput(true)}
-              className="w-full py-3 border border-dashed border-gray-600 text-gray-400 font-mono hover:border-neon-blue hover:text-neon-blue transition-colors flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
-            >
-              <PlusCircle size={20} />
-              MANUAL ENTRY OVERRIDE
-            </button>
-          ) : (
-            <div className="cyber-card p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-neon-blue text-xs uppercase tracking-widest">New Entry</h3>
-                <button onClick={() => setShowCustomInput(false)} className="text-gray-500 hover:text-red-500"><Trash2 size={18} /></button>
-              </div>
-              <input
-                type="text"
-                placeholder="ITEM NAME"
-                value={customDishName}
-                onChange={(e) => setCustomDishName(e.target.value)}
-                className="w-full p-2 bg-black/50 border border-gray-700 text-white font-mono text-sm placeholder:text-gray-700 focus:border-neon-blue outline-none"
-              />
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  placeholder="PRICE"
-                  value={customDishPrice}
-                  onChange={(e) => setCustomDishPrice(e.target.value)}
-                  className="w-1/3 p-2 bg-black/50 border border-gray-700 text-white font-mono text-sm placeholder:text-gray-700 focus:border-neon-blue outline-none"
-                />
-                <button 
-                  onClick={addCustomItem}
-                  disabled={!customDishName}
-                  className="flex-1 bg-neon-blue/20 text-neon-blue border border-neon-blue hover:bg-neon-blue hover:text-black font-bold uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  ADD
-                </button>
-              </div>
+        {/* Manual Entry Toggle */}
+        {!showCustomInput ? (
+          <button 
+            onClick={() => setShowCustomInput(true)}
+            className="w-full py-4 border border-dashed border-slate-300 rounded-2xl text-slate-400 font-medium hover:border-orange-300 hover:text-orange-500 transition-colors"
+          >
+            + Добавить вручную
+          </button>
+        ) : (
+          <div className="app-card p-5 space-y-4 animate-in fade-in slide-in-from-top-2">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-slate-700">Свое блюдо</h3>
+              <button onClick={() => setShowCustomInput(false)} className="text-slate-400"><X size={20} /></button>
             </div>
-          )}
-        </div>
+            <input
+              type="text"
+              placeholder="Название"
+              value={customDishName}
+              onChange={(e) => setCustomDishName(e.target.value)}
+              className="app-input"
+            />
+            <div className="flex gap-3">
+              <input
+                type="number"
+                placeholder="Цена"
+                value={customDishPrice}
+                onChange={(e) => setCustomDishPrice(e.target.value)}
+                className="app-input w-1/3"
+              />
+              <button 
+                onClick={addCustomItem}
+                disabled={!customDishName}
+                className="flex-1 bg-slate-900 text-white rounded-2xl font-bold hover:bg-black transition-colors disabled:opacity-50"
+              >
+                Добавить
+              </button>
+            </div>
+          </div>
+        )}
 
-        <div className="space-y-4 pt-4 border-t border-gray-800">
-          <input
-            type="text"
-            placeholder="SEARCH DATABASE..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-black/50 border border-neon-blue/30 text-white py-2 px-4 text-sm font-mono uppercase placeholder:text-gray-600 focus:border-neon-pink focus:outline-none clip-path-input"
-          />
+        {/* Menu Search & Categories */}
+        <div className="sticky top-16 z-20 bg-slate-50 pt-4 pb-2 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-4 top-3.5 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Поиск..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="app-input pl-11 rounded-full shadow-sm"
+            />
+          </div>
 
           <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`whitespace-nowrap px-3 py-1 text-[10px] font-bold uppercase tracking-widest transition-colors border ${
+                className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold transition-all ${
                   selectedCategory === cat
-                    ? 'bg-neon-pink text-black border-neon-pink'
-                    : 'bg-transparent text-gray-400 border-gray-700 hover:border-white hover:text-white'
+                    ? 'bg-slate-800 text-white shadow-md'
+                    : 'bg-white text-slate-500 border border-slate-200'
                 }`}
               >
                 {cat}
               </button>
             ))}
           </div>
+        </div>
 
-          <div className="space-y-2">
-            {filteredItems.map((item) => {
-              const inCart = cart.find(c => c.id === item.id)
-              const qty = inCart ? inCart.quantity : 0
-              
-              return (
-                <div key={item.id} className="flex justify-between items-center bg-black/40 p-3 border border-gray-800 hover:border-neon-blue/50 transition-colors group">
-                  <div className="flex-1">
-                    <p className="font-bold text-white text-sm uppercase font-mono group-hover:text-neon-blue transition-colors">{item.title}</p>
-                    <p className="text-[10px] text-gray-500">{item.price} ¥</p>
-                  </div>
-                  
-                  {qty === 0 ? (
-                    <button
-                      onClick={() => addToCart(item)}
-                      className="p-2 text-gray-500 hover:text-neon-pink transition-colors"
-                    >
-                      <Plus size={18} />
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-3 bg-neon-blue/10 px-2 py-1 border border-neon-blue/30">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-neon-blue hover:text-white"><Minus size={14} /></button>
-                      <span className="font-bold text-white font-mono w-4 text-center">{qty}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-neon-blue hover:text-white"><Plus size={14} /></button>
-                    </div>
-                  )}
+        {/* Menu Grid */}
+        <div className="grid gap-3">
+          {filteredItems.map((item) => {
+            const inCart = cart.find(c => c.id === item.id)
+            const qty = inCart ? inCart.quantity : 0
+            
+            return (
+              <div 
+                key={item.id} 
+                onClick={() => addToCart(item)}
+                className={`app-card p-4 flex justify-between items-center cursor-pointer border-2 transition-all ${qty > 0 ? 'border-orange-500 bg-orange-50/30' : 'border-transparent'}`}
+              >
+                <div>
+                  <p className="font-bold text-slate-800">{item.title}</p>
+                  <p className="text-sm text-slate-500 mt-0.5">{item.price} ₽</p>
                 </div>
-              )
-            })}
-          </div>
+                
+                {qty > 0 ? (
+                  <div className="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">
+                    {qty}
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                    <Plus size={16} />
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 
+      {/* Floating Action Bar */}
       {totalItems > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#01012b] border-t border-neon-pink/50 p-4 shadow-[0_-5px_20px_rgba(255,42,109,0.2)] pb-safe z-20">
-          <div className="flex justify-between items-center mb-4 font-mono">
-            <span className="text-gray-400 text-xs uppercase tracking-widest">{totalItems} UNITS</span>
-            <span className="font-bold text-xl text-neon-pink">
-              {cart.reduce((sum, i) => sum + i.price * i.quantity, 0)} ¥
-            </span>
-          </div>
+        <div className="fixed bottom-6 left-4 right-4 max-w-2xl mx-auto z-40">
           <button
             onClick={handleAddItems}
             disabled={submitting}
-            className="w-full py-3 bg-neon-pink text-black font-bold uppercase tracking-[0.2em] shadow-[0_0_15px_var(--neon-pink)] hover:bg-white hover:text-neon-pink transition-all flex items-center justify-center gap-2 cyber-button-hot"
+            className="w-full bg-orange-500 text-white rounded-2xl p-4 shadow-xl shadow-orange-500/30 flex items-center justify-between font-bold active:scale-95 transition-transform"
           >
-            {submitting ? 'PROCESSING...' : (
-              <>
-                <ShoppingCart size={20} />
-                CONFIRM SUPPLEMENTS
-              </>
-            )}
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 px-3 py-1 rounded-lg text-sm">
+                +{totalItems} шт
+              </div>
+              <span>Добавить в заказ</span>
+            </div>
+            <span className="text-lg">{totalPrice} ₽</span>
           </button>
         </div>
       )}
