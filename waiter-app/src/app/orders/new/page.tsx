@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Minus, Plus, ShoppingCart, PlusCircle, Trash2 } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, ShoppingBag, Search, X } from 'lucide-react'
 
 type MenuItem = {
   id: string
@@ -28,7 +28,6 @@ export default function NewOrderPage() {
   const [tableNumber, setTableNumber] = useState('')
   const [items, setItems] = useState<MenuItem[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [categories, setCategories] = useState<string[]>(['Все'])
   const [selectedCategory, setSelectedCategory] = useState('Все')
@@ -56,7 +55,6 @@ export default function NewOrderPage() {
       const uniqueCategories = Array.from(new Set(data.map((i) => i.category || 'Прочее')))
       setCategories(['Все', ...uniqueCategories])
     }
-    setLoading(false)
   }
 
   const addToCart = (item: MenuItem) => {
@@ -101,8 +99,8 @@ export default function NewOrderPage() {
   }
 
   const handleSubmit = async () => {
-    if (!tableNumber) return alert('НОМЕР СТОЛА?')
-    if (cart.length === 0) return alert('БЛЮДА?')
+    if (!tableNumber) return alert('Введите номер стола')
+    if (cart.length === 0) return alert('Выберите блюда')
     
     setSubmitting(true)
     
@@ -137,7 +135,7 @@ export default function NewOrderPage() {
       .insert(itemsToInsert)
 
     if (itemsError) {
-      alert('Ошибка блюд: ' + itemsError.message)
+      alert('Ошибка: ' + itemsError.message)
     } else {
       router.push(`/orders/${order.id}`)
     }
@@ -151,154 +149,174 @@ export default function NewOrderPage() {
   })
 
   const totalItems = cart.reduce((a, b) => a + b.quantity, 0)
+  const totalPrice = cart.reduce((sum, i) => sum + i.price * i.quantity, 0)
 
   return (
-    <div className="min-h-screen pb-32 bg-[#f4f4f0] relative">
-      {/* Texture Overlay */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none" style={{backgroundImage: 'url("https://www.transparenttextures.com/patterns/wood-pattern.png")'}}></div>
-
-      <header className="sticky top-0 z-20 bg-[#f4f4f0]/95 backdrop-blur-md p-6 flex items-center justify-between border-b border-[#e0e0e0]">
-        <Link href="/" className="text-gray-400 hover:text-black transition-colors">
-          <ArrowLeft size={24} />
+    <div className="min-h-screen bg-slate-50 pb-32">
+      
+      {/* Header */}
+      <header className="bg-white sticky top-0 z-30 border-b border-slate-100 px-4 py-3 flex items-center gap-4 safe-top">
+        <Link href="/" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+          <ArrowLeft size={20} />
         </Link>
-        <h1 className="text-xl font-serif tracking-widest uppercase">Заказ</h1>
+        <div>
+          <h1 className="text-lg font-bold text-slate-900">Новый заказ</h1>
+          <p className="text-xs text-slate-400 font-medium">Официант: {user}</p>
+        </div>
       </header>
 
-      <div className="p-6 space-y-8 relative z-10">
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Номер Стола</label>
+      <div className="p-4 max-w-2xl mx-auto space-y-6">
+        
+        {/* Table Input */}
+        <div className="app-card p-6 flex flex-col items-center">
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Номер стола</label>
           <input
-            type="text"
+            type="number"
+            inputMode="numeric"
             value={tableNumber}
             onChange={(e) => setTableNumber(e.target.value)}
-            className="w-full text-4xl font-serif bg-transparent border-b-2 border-gray-200 focus:border-[#bc002d] outline-none py-2 text-center transition-colors placeholder:text-gray-200"
-            placeholder="00"
+            className="text-5xl font-black text-center w-full bg-transparent outline-none placeholder:text-slate-200 text-slate-800"
+            placeholder="#"
           />
         </div>
 
+        {/* Cart Preview */}
         {cart.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold border-b border-gray-200 pb-2">Выбрано</h3>
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold text-slate-500 uppercase px-1">Корзина</h3>
             {cart.map((item) => (
-              <div key={item.id} className="flex justify-between items-center group">
-                <div className="flex-1">
-                  <p className="font-serif text-lg">{item.title}</p>
-                  <p className="text-xs text-gray-400 font-mono mt-1">{item.price} ₽</p>
+              <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
+                <div>
+                  <p className="font-bold text-slate-800">{item.title}</p>
+                  <p className="text-xs text-orange-500 font-bold mt-0.5">{item.price} ₽</p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <button onClick={() => updateQuantity(item.id, -1)} className="text-gray-300 hover:text-black"><Minus size={16} /></button>
-                  <span className="font-mono text-lg w-6 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, 1)} className="text-gray-300 hover:text-black"><Plus size={16} /></button>
+                <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-1">
+                  <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-600 active:scale-95 transition-transform"><Minus size={14} /></button>
+                  <span className="font-bold text-slate-700 w-4 text-center text-sm">{item.quantity}</span>
+                  <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-600 active:scale-95 transition-transform"><Plus size={14} /></button>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        <div className="space-y-4">
-          {!showCustomInput ? (
-            <button 
-              onClick={() => setShowCustomInput(true)}
-              className="w-full py-4 border border-dashed border-gray-300 text-gray-400 hover:border-gray-500 hover:text-gray-600 transition-all font-serif tracking-widest text-xs uppercase"
-            >
-              + Ручной Ввод
-            </button>
-          ) : (
-            <div className="bg-white border border-gray-200 p-6 space-y-6">
-              <div className="flex justify-between items-center">
-                <h3 className="font-serif text-sm">Свое Блюдо</h3>
-                <button onClick={() => setShowCustomInput(false)} className="text-gray-300 hover:text-red-500"><Trash2 size={16} /></button>
-              </div>
-              <input
-                type="text"
-                placeholder="Название"
-                value={customDishName}
-                onChange={(e) => setCustomDishName(e.target.value)}
-                className="jp-input"
-              />
-              <div className="flex gap-4">
-                <input
-                  type="number"
-                  placeholder="Цена"
-                  value={customDishPrice}
-                  onChange={(e) => setCustomDishPrice(e.target.value)}
-                  className="jp-input w-1/3"
-                />
-                <button 
-                  onClick={addCustomItem}
-                  disabled={!customDishName}
-                  className="flex-1 bg-gray-900 text-white font-serif tracking-widest text-xs uppercase hover:bg-black transition-colors"
-                >
-                  Добавить
-                </button>
-              </div>
+        {/* Manual Entry Toggle */}
+        {!showCustomInput ? (
+          <button 
+            onClick={() => setShowCustomInput(true)}
+            className="w-full py-4 border border-dashed border-slate-300 rounded-2xl text-slate-400 font-medium hover:border-orange-300 hover:text-orange-500 transition-colors"
+          >
+            + Добавить блюдо вручную
+          </button>
+        ) : (
+          <div className="app-card p-5 space-y-4 animate-in fade-in slide-in-from-top-2">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-slate-700">Свое блюдо</h3>
+              <button onClick={() => setShowCustomInput(false)} className="text-slate-400"><X size={20} /></button>
             </div>
-          )}
-        </div>
+            <input
+              type="text"
+              placeholder="Название блюда"
+              value={customDishName}
+              onChange={(e) => setCustomDishName(e.target.value)}
+              className="app-input"
+            />
+            <div className="flex gap-3">
+              <input
+                type="number"
+                placeholder="Цена"
+                value={customDishPrice}
+                onChange={(e) => setCustomDishPrice(e.target.value)}
+                className="app-input w-1/3"
+              />
+              <button 
+                onClick={addCustomItem}
+                disabled={!customDishName}
+                className="flex-1 bg-slate-900 text-white rounded-2xl font-bold hover:bg-black transition-colors disabled:opacity-50"
+              >
+                Добавить
+              </button>
+            </div>
+          </div>
+        )}
 
-        <div className="pt-8 border-t border-gray-200 space-y-6">
-          <input
-            type="text"
-            placeholder="Поиск..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="jp-input uppercase text-sm placeholder:text-gray-300"
-          />
+        {/* Menu Search & Categories */}
+        <div className="sticky top-16 z-20 bg-slate-50 pt-4 pb-2 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-4 top-3.5 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Поиск по меню..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="app-input pl-11 rounded-full shadow-sm"
+            />
+          </div>
 
           <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`whitespace-nowrap px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold transition-all ${
                   selectedCategory === cat
-                    ? 'bg-[#bc002d] text-white'
-                    : 'bg-white text-gray-400 hover:text-black'
+                    ? 'bg-slate-800 text-white shadow-md'
+                    : 'bg-white text-slate-500 border border-slate-200'
                 }`}
               >
                 {cat}
               </button>
             ))}
           </div>
+        </div>
 
-          <div className="grid gap-2">
-            {filteredItems.map((item) => {
-              const inCart = cart.find(c => c.id === item.id)
-              const qty = inCart ? inCart.quantity : 0
-              
-              return (
-                <div key={item.id} className="flex justify-between items-center p-4 bg-white border border-transparent hover:border-gray-200 transition-all cursor-pointer" onClick={() => addToCart(item)}>
-                  <div className="flex-1">
-                    <p className="font-serif text-sm">{item.title}</p>
-                    <p className="text-[10px] text-gray-400 mt-1 font-mono">{item.price} ₽</p>
-                  </div>
-                  
-                  {qty > 0 && (
-                    <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full font-mono text-sm">
-                      {qty}
-                    </div>
-                  )}
+        {/* Menu Grid */}
+        <div className="grid gap-3">
+          {filteredItems.map((item) => {
+            const inCart = cart.find(c => c.id === item.id)
+            const qty = inCart ? inCart.quantity : 0
+            
+            return (
+              <div 
+                key={item.id} 
+                onClick={() => addToCart(item)}
+                className={`app-card p-4 flex justify-between items-center cursor-pointer border-2 transition-all ${qty > 0 ? 'border-orange-500 bg-orange-50/30' : 'border-transparent'}`}
+              >
+                <div>
+                  <p className="font-bold text-slate-800">{item.title}</p>
+                  <p className="text-sm text-slate-500 mt-0.5">{item.price} ₽</p>
                 </div>
-              )
-            })}
-          </div>
+                
+                {qty > 0 ? (
+                  <div className="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">
+                    {qty}
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                    <Plus size={16} />
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 
+      {/* Floating Action Bar */}
       {totalItems > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-6 shadow-2xl pb-safe z-30">
-          <div className="flex justify-between items-center mb-6">
-            <span className="text-[10px] uppercase tracking-widest text-gray-400">{totalItems} Позиций</span>
-            <span className="font-serif text-xl">
-              {cart.reduce((sum, i) => sum + i.price * i.quantity, 0)} ₽
-            </span>
-          </div>
+        <div className="fixed bottom-6 left-4 right-4 max-w-2xl mx-auto z-40">
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="w-full jp-button jp-button-red h-14 text-sm"
+            className="w-full bg-orange-500 text-white rounded-2xl p-4 shadow-xl shadow-orange-500/30 flex items-center justify-between font-bold active:scale-95 transition-transform"
           >
-            {submitting ? 'Обработка...' : 'ПОДТВЕРДИТЬ'}
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 px-3 py-1 rounded-lg text-sm">
+                {totalItems} шт
+              </div>
+              <span>Оформить заказ</span>
+            </div>
+            <span className="text-lg">{totalPrice} ₽</span>
           </button>
         </div>
       )}

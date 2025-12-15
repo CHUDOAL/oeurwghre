@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Assistant from '@/components/Assistant'
+import { ChefHat } from 'lucide-react'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
@@ -22,77 +22,47 @@ export default function LoginPage() {
       router.push('/')
       router.refresh()
     } else {
-      setError('Ошибка доступа')
+      setError('Неверный логин')
     }
   }
 
-  const loginMessages = [
-    "Идентификация...",
-    "Добро пожаловать.",
-    "Система готова.",
-    "Хорошей смены."
-  ]
-
   return (
-    <div className="flex min-h-screen relative overflow-hidden bg-[#f4f4f0]">
-      {/* Decorative Circle (Rising Sun) */}
-      <div className="absolute top-[-10%] right-[-10%] w-[50vh] h-[50vh] rounded-full bg-[#bc002d] opacity-10"></div>
-      
-      {/* Left: Assistant */}
-      <div className="hidden lg:block w-1/3 h-full relative pointer-events-auto border-r border-[#e0e0e0] bg-white">
-        <div className="absolute bottom-0 left-10 w-full h-[80%]">
-          <Assistant 
-            src="/waifu-login.png" 
-            messages={loginMessages}
-            bubblePosition="top-right"
-            className="h-full w-full"
-          />
-        </div>
-      </div>
-
-      {/* Right: Login Form */}
-      <div className="w-full lg:w-2/3 flex flex-col items-center justify-center p-8 relative z-10">
-        <div className="w-full max-w-md space-y-12">
-          <div className="text-center space-y-2">
-            <h1 className="text-4xl tracking-widest uppercase">Tanuki<span className="text-[#bc002d]">.Sys</span></h1>
-            <p className="text-sm text-gray-400 tracking-[0.2em] uppercase">Staff Access Terminal</p>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+      <div className="w-full max-w-sm bg-white rounded-[32px] shadow-xl p-8 border border-slate-100">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4 text-orange-600">
+            <ChefHat size={32} />
           </div>
-          
-          <form onSubmit={handleLogin} className="space-y-8">
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Идентификатор</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="jp-input text-2xl"
-                placeholder="Имя сотрудника"
-                required
-              />
+          <h1 className="text-2xl font-bold text-slate-900">Tanuki Waiter</h1>
+          <p className="text-slate-500">Вход для персонала</p>
+        </div>
+        
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700 ml-1">Ваш Логин</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="app-input"
+              placeholder="gross / maxim"
+              required
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 text-red-600 text-sm font-medium p-4 rounded-2xl text-center animate-in fade-in">
+              {error}
             </div>
+          )}
 
-            {error && (
-              <div className="text-sm text-[#bc002d] border-l-2 border-[#bc002d] pl-4 py-2 bg-red-50">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full jp-button jp-button-red h-14"
-            >
-              ВХОД В СИСТЕМУ
-            </button>
-          </form>
-          
-          <div className="flex justify-center gap-4 text-[10px] text-gray-300 uppercase tracking-widest">
-            <span>Secure</span>
-            <span>•</span>
-            <span>Private</span>
-            <span>•</span>
-            <span>Logged</span>
-          </div>
-        </div>
+          <button
+            type="submit"
+            className="app-button w-full text-lg py-4 shadow-lg shadow-orange-500/20"
+          >
+            Войти
+          </button>
+        </form>
       </div>
     </div>
   )
