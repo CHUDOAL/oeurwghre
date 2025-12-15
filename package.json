@@ -5,6 +5,7 @@
   },
   "dependencies": {
     "node-fetch": "^2.7.0",
+    "puppeteer": "^24.33.0",
     "react-easy-crop": "^5.5.6"
   }
 }

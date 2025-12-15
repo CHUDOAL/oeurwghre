@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import { ArrowLeft, Search, Image as ImageIcon } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowLeft, Search, Image as ImageIcon, X } from 'lucide-react'
 
 type MenuItem = {
   id: string
@@ -20,6 +21,8 @@ export default function MenuPage() {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('Все')
   const [categories, setCategories] = useState<string[]>(['Все'])
+  
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
 
   useEffect(() => {
     fetchMenu()
@@ -92,14 +95,18 @@ export default function MenuPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
-              <div key={item.id} className="app-card overflow-hidden group cursor-pointer hover:shadow-lg">
+              <div 
+                key={item.id} 
+                onClick={() => setSelectedItem(item)}
+                className="app-card overflow-hidden group cursor-pointer hover:shadow-lg transition-all active:scale-[0.98]"
+              >
                 <div className="aspect-video w-full bg-slate-100 relative overflow-hidden">
                   {item.image_url ? (
-                     // eslint-disable-next-line @next/next/no-img-element
-                     <img 
+                     <Image 
                        src={item.image_url} 
                        alt={item.title}
-                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                       fill
+                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                      />
                   ) : (
                     <div className="flex items-center justify-center h-full w-full bg-slate-100">
@@ -115,9 +122,10 @@ export default function MenuPage() {
                       {item.price} ₽
                     </span>
                   </div>
-                  <p className="text-sm text-slate-500 line-clamp-2">{item.description || 'Описание отсутствует'}</p>
+                  <p className="text-sm text-slate-500 line-clamp-2">{item.description || 'Нажмите, чтобы прочитать описание'}</p>
                   <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{item.category}</span>
+                    <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">Подробнее</span>
                   </div>
                 </div>
               </div>
@@ -125,6 +133,57 @@ export default function MenuPage() {
           </div>
         )}
       </div>
+
+      {/* Item Detail Modal */}
+      {selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl relative animate-in zoom-in-95 max-h-[90vh] flex flex-col">
+            {/* Close Button */}
+            <button 
+              onClick={() => setSelectedItem(null)}
+              className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 backdrop-blur-sm transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Image */}
+            <div className="aspect-video relative bg-slate-100 shrink-0">
+               {selectedItem.image_url ? (
+                  <Image 
+                      src={selectedItem.image_url} 
+                      alt={selectedItem.title}
+                      fill
+                      className="object-cover"
+                  />
+               ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-300">
+                      <ImageIcon size={48} />
+                  </div>
+               )}
+            </div>
+
+            {/* Content with Scroll */}
+            <div className="p-6 overflow-y-auto">
+              <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-2xl font-bold text-slate-900">{selectedItem.title}</h3>
+                  <p className="text-orange-500 font-bold text-xl bg-orange-50 px-3 py-1 rounded-xl ml-4 whitespace-nowrap">{selectedItem.price} ₽</p>
+              </div>
+              
+              <div className="bg-slate-50 rounded-xl p-5">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Описание / Состав</h4>
+                <p className="text-slate-700 leading-relaxed text-base">
+                  {selectedItem.description || "Описание отсутствует"}
+                </p>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">{selectedItem.category}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

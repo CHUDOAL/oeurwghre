@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Minus, Plus, Search, X } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowLeft, Minus, Plus, Search, X, Image as ImageIcon, Info } from 'lucide-react'
 
 type MenuItem = {
   id: string
@@ -12,6 +13,8 @@ type MenuItem = {
   price: number
   category: string
   station?: string
+  image_url?: string
+  description?: string
 }
 
 type CartItem = {
@@ -35,6 +38,8 @@ export default function AddItemsToOrderPage() {
   const [selectedCategory, setSelectedCategory] = useState('Все')
   const [submitting, setSubmitting] = useState(false)
 
+  const [selectedItemInfo, setSelectedItemInfo] = useState<MenuItem | null>(null)
+
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [customDishName, setCustomDishName] = useState('')
   const [customDishPrice, setCustomDishPrice] = useState('')
@@ -44,7 +49,7 @@ export default function AddItemsToOrderPage() {
   }, [])
 
   const fetchMenu = async () => {
-    const { data } = await supabase.from('menu_items').select('id, title, price, category, station')
+    const { data } = await supabase.from('menu_items').select('id, title, price, category, station, image_url, description')
     if (data) {
       setItems(data)
       const uniqueCategories = Array.from(new Set(data.map((i) => i.category || 'Прочее')))
@@ -232,7 +237,7 @@ export default function AddItemsToOrderPage() {
         </div>
 
         {/* Menu Grid */}
-        <div className="grid gap-3">
+        <div className="grid grid-cols-2 gap-3 pb-24">
           {filteredItems.map((item) => {
             const inCart = cart.find(c => c.id === item.id)
             const qty = inCart ? inCart.quantity : 0
@@ -241,22 +246,58 @@ export default function AddItemsToOrderPage() {
               <div 
                 key={item.id} 
                 onClick={() => addToCart(item)}
-                className={`app-card p-4 flex justify-between items-center cursor-pointer border-2 transition-all ${qty > 0 ? 'border-orange-500 bg-orange-50/30' : 'border-transparent'}`}
+                className={`bg-white rounded-2xl overflow-hidden shadow-sm border-2 transition-all relative cursor-pointer group ${qty > 0 ? 'border-orange-500 ring-2 ring-orange-500/20' : 'border-transparent'}`}
               >
-                <div>
-                  <p className="font-bold text-slate-800">{item.title}</p>
-                  <p className="text-sm text-slate-500 mt-0.5">{item.price} ₽</p>
+                {/* Image */}
+                <div className="aspect-[4/3] bg-slate-100 relative">
+                    {item.image_url ? (
+                        <Image 
+                            src={item.image_url} 
+                            alt={item.title}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 50vw, 33vw"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                            <ImageIcon size={32} />
+                            <span className="text-[10px] mt-2 font-medium">Нет фото</span>
+                        </div>
+                    )}
+                    
+                    {/* Qty Badge */}
+                    {qty > 0 && (
+                        <div className="absolute top-2 right-2 bg-orange-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-lg animate-in zoom-in">
+                            {qty}
+                        </div>
+                    )}
+
+                    {/* Info Button - Opens Modal */}
+                    {item.description && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation() // Don't add to cart
+                          setSelectedItemInfo(item)
+                        }}
+                        className="absolute bottom-2 right-2 bg-white/90 text-slate-600 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm shadow-sm hover:bg-white hover:text-orange-500 transition-colors"
+                      >
+                        <Info size={16} />
+                      </button>
+                    )}
                 </div>
-                
-                {qty > 0 ? (
-                  <div className="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">
-                    {qty}
+
+                <div className="p-3">
+                  <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 min-h-[2.5em]">{item.title}</p>
+                  <div className="flex justify-between items-end mt-2">
+                      <p className="text-slate-500 font-medium text-xs bg-slate-100 px-2 py-1 rounded-lg">{item.price} ₽</p>
+                      
+                      {!qty && (
+                          <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Plus size={14} />
+                          </div>
+                      )}
                   </div>
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                    <Plus size={16} />
-                  </div>
-                )}
+                </div>
               </div>
             )
           })}
@@ -281,6 +322,62 @@ export default function AddItemsToOrderPage() {
           </button>
         </div>
       )}
+
+      {/* Description Modal */}
+      {selectedItemInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative animate-in zoom-in-95">
+            {/* Close Button */}
+            <button 
+              onClick={() => setSelectedItemInfo(null)}
+              className="absolute top-4 right-4 z-10 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 backdrop-blur-sm transition-colors"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Image */}
+            <div className="aspect-video relative bg-slate-100">
+               {selectedItemInfo.image_url ? (
+                  <Image 
+                      src={selectedItemInfo.image_url} 
+                      alt={selectedItemInfo.title}
+                      fill
+                      className="object-cover"
+                  />
+               ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-300">
+                      <ImageIcon size={48} />
+                  </div>
+               )}
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">{selectedItemInfo.title}</h3>
+              <p className="text-orange-500 font-bold text-lg mb-4">{selectedItemInfo.price} ₽</p>
+              
+              <div className="bg-slate-50 rounded-xl p-4 mb-6">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Состав / Описание</h4>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  {selectedItemInfo.description || "Описание отсутствует"}
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  addToCart(selectedItemInfo)
+                  setSelectedItemInfo(null)
+                }}
+                className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus size={18} />
+                Добавить в заказ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

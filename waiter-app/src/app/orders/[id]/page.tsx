@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowLeft, CheckCircle, Circle, Clock, Plus, Trash2, Flame, Snowflake, Coffee } from 'lucide-react'
 
 type OrderItem = {
@@ -19,6 +20,7 @@ type OrderItem = {
     title: string
     price: number
     station?: string
+    image_url?: string
   } | null
 }
 
@@ -70,7 +72,7 @@ export default function OrderPage() {
         item_title,
         item_price,
         item_station,
-        menu_items ( title, price, station )
+        menu_items ( title, price, station, image_url )
       `)
       .eq('order_id', id)
       .order('created_at', { ascending: true })
@@ -236,6 +238,18 @@ export default function OrderPage() {
                             <Circle className="text-slate-300" size={24} />
                           )}
                         </div>
+
+                        {item.menu_items?.image_url && (
+                          <div className="relative w-16 h-16 rounded-xl overflow-hidden mr-4 flex-shrink-0 bg-slate-100">
+                            <Image 
+                              src={item.menu_items.image_url} 
+                              alt={title} 
+                              fill 
+                              className={`object-cover ${item.served ? 'grayscale opacity-50' : ''}`} 
+                              sizes="64px"
+                            />
+                          </div>
+                        )}
                         
                         <div className="flex-1">
                           <div className="flex justify-between items-start">
