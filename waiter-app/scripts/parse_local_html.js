@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
-// Загружаем переменные окружения
 function loadEnv() {
   try {
     const envPath = path.resolve(__dirname, '../.env.local');
@@ -18,96 +17,82 @@ function loadEnv() {
       });
       return env;
     }
-  } catch (e) {
-    console.error('Error reading .env.local', e);
-  }
+  } catch (e) {}
   return process.env;
 }
 
 const env = loadEnv();
-const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase credentials!');
-  process.exit(1);
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Путь к файлу
+const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const HTML_FILE_PATH = path.join(__dirname, '../tanuki.html');
 
 async function run() {
   if (!fs.existsSync(HTML_FILE_PATH)) {
-    console.error(`File not found: ${HTML_FILE_PATH}`);
+    console.error('File not found');
     return;
   }
 
   const html = fs.readFileSync(HTML_FILE_PATH, 'utf8');
-  console.log(`Read file, size: ${html.length} chars.`);
+  console.log(`Scanning HTML (${html.length} chars)...`);
 
   let items = [];
 
-  // Strategy 2: Regex for <img> tags with alt (fallback)
-  console.log('Scanning for images...');
-  const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["']/g;
-  let match;
-  while ((match = imgRegex.exec(html)) !== null) {
-      let src = match[1];
-      let alt = match[2];
-      alt = alt.trim();
-      if (src.startsWith('/')) src = 'https://tanukifamily.ru' + src;
-      if (alt.length > 3 && !alt.toLowerCase().includes('logo') && !src.includes('.svg')) {
-          items.push({ title: alt, url: src });
-      }
-  }
+  // Robust Regex: Find full <img> tags, then extract attributes
+  const imgTagRegex = /<img\s+([^>]+)>/gi;
+  let tagMatch;
   
-  const imgRegex2 = /<img[^>]+alt=["']([^"']+)["'][^>]*src=["']([^"']+)["']/g;
-  while ((match = imgRegex2.exec(html)) !== null) {
-      let alt = match[1];
-      let src = match[2];
-      if (src.startsWith('/')) src = 'https://tanukifamily.ru' + src;
-      if (alt.length > 3 && !alt.toLowerCase().includes('logo') && !src.includes('.svg')) {
-           items.push({ title: alt, url: src });
+  while ((tagMatch = imgTagRegex.exec(html)) !== null) {
+      const attrs = tagMatch[1];
+      
+      // Extract src
+      const srcMatch = attrs.match(/src=["']([^"']+)["']/i);
+      // Extract alt
+      const altMatch = attrs.match(/alt=["']([^"']+)["']/i);
+
+      if (srcMatch && altMatch) {
+          let src = srcMatch[1];
+          let alt = altMatch[1].trim();
+
+          // Fix relative URLs
+          if (src.startsWith('/')) src = 'https://tanukifamily.ru' + src;
+          
+          // Fix saved page local paths (e.g. ./Page_files/image.jpg)
+          if (src.includes('_files/')) {
+              const parts = src.split('/');
+              const filename = parts[parts.length - 1];
+              src = `https://kcdn.tanuki.ru/images/1/${filename}`;
+          }
+          
+          // Filter bad images
+          if (
+              alt.length > 2 && 
+              !alt.toLowerCase().includes('logo') && 
+              !src.includes('.svg') &&
+              !src.includes('data:image') // Skip base64 placeholders
+          ) {
+              items.push({ title: alt, url: src });
+          }
       }
   }
 
   const uniqueItems = Array.from(new Map(items.map(item => [item.title, item])).values());
-  console.log(`Found ${uniqueItems.length} unique items in HTML.`);
-  
-  // Show first 5 found items
-  console.log('Sample items found in HTML:', uniqueItems.slice(0, 5).map(i => i.title));
+  console.log(`Found ${uniqueItems.length} unique items.`);
 
-  // Get current DB items to compare
-  const { data: dbItems, error } = await supabase.from('menu_items').select('title');
-  if (error) {
-      console.error('Error fetching DB items:', error);
+  // Debug Tiger
+  const tiger = uniqueItems.find(i => i.title.includes('Тайгер'));
+  if (tiger) console.log('DEBUG: Found Tiger URL:', tiger.url);
+  else console.log('DEBUG: Tiger NOT found in HTML scan.');
+
+  // Update DB
+  let updatedCount = 0;
+  const { data: dbItems } = await supabase.from('menu_items').select('title');
+
+  if (!dbItems) {
+      console.error('Failed to fetch DB items');
       return;
   }
-  
-  console.log(`Total items in DB: ${dbItems.length}`);
-  console.log('Sample items in DB:', dbItems.slice(0, 5).map(i => i.title));
 
-  // Update DB with fuzzy matching or exact match
-  let updatedCount = 0;
   for (const item of uniqueItems) {
-    // Try exact match
-    let { data, error } = await supabase
-      .from('menu_items')
-      .update({ image_url: item.url })
-      .eq('title', item.title)
-      .select();
-
-    if (data && data.length > 0) {
-       console.log(`[EXACT] Updated: ${item.title}`);
-       updatedCount++;
-    } else {
-       // Try matching "Ролл Калифорния" in DB vs "Калифорния" in HTML
-       // or "Ролл Калифорния" in HTML vs "Калифорния" in DB
-       // Simple fuzzy: check if one contains the other
-       
-       // Find a DB item that contains the HTML title OR is contained by HTML title
+       // Fuzzy match against DB
        const match = dbItems.find(dbItem => 
            dbItem.title.toLowerCase() === item.title.toLowerCase() ||
            dbItem.title.toLowerCase().includes(item.title.toLowerCase()) ||
@@ -115,20 +100,16 @@ async function run() {
        );
        
        if (match) {
-           const { error: updateError } = await supabase
+           const { error } = await supabase
               .from('menu_items')
               .update({ image_url: item.url })
               .eq('title', match.title);
               
-           if (!updateError) {
-               console.log(`[FUZZY] Updated: ${match.title} (matched with ${item.title})`);
-               updatedCount++;
-           }
+           if (!error) updatedCount++;
        }
-    }
   }
 
-  console.log(`Finished. Updated ${updatedCount} items.`);
+  console.log(`Updated ${updatedCount} items.`);
 }
 
 run();
