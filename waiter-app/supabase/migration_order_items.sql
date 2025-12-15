@@ -5,3 +5,4 @@ alter table public.order_items add column if not exists item_price numeric;
 /* Allow menu_item_id to be nullable for pure custom items (optional, but safer) */
 alter table public.order_items alter column menu_item_id drop not null;
 
+

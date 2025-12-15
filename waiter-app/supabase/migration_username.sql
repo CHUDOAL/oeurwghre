@@ -10,3 +10,4 @@ drop policy if exists "Order items are viewable by authenticated users" on publi
 create policy "Order items are viewable by everyone" on public.order_items for select using (true);
 create policy "Order items are editable by everyone" on public.order_items for all using (true);
 
+

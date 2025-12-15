@@ -32,3 +32,4 @@ create policy "Public Update"
 on storage.objects for update
 using ( bucket_id = 'menu-images' );
 
+
