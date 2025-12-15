@@ -1,3 +1,4 @@
+
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -5,11 +6,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.supabase.co', // Allow all Supabase projects
+        hostname: '**.supabase.co',
       },
       {
         protocol: 'https',
-        hostname: 'tanukifamily.ru', // In case we link directly later
+        hostname: 'tanukifamily.ru',
+      },
+      {
+        protocol: 'https',
+        hostname: 'kcdn.tanuki.ru',
       }
     ],
   },
