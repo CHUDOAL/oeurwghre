@@ -23,3 +23,4 @@ fs.writeFileSync(outputPath, sql);
 console.log(`Generated ${outputPath} with ${items.length} items.`);
 
 
+

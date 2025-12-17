@@ -33,3 +33,4 @@ on storage.objects for update
 using ( bucket_id = 'menu-images' );
 
 
+

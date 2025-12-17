@@ -58,3 +58,4 @@ create policy "Order items are viewable by authenticated users" on public.order_
 -- create policy "Authenticated users can upload menu images" on storage.objects for insert using (bucket_id = 'menu-images' and auth.role() = 'authenticated');
 
 
+

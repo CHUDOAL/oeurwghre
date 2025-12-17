@@ -10,3 +10,4 @@ with check (true);
 -- Или, если политика уже есть, но она строгая, можно отключить RLS временно
 -- alter table "public"."menu_items" disable row level security;
 
+

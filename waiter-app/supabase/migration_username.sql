@@ -11,3 +11,4 @@ create policy "Order items are viewable by everyone" on public.order_items for s
 create policy "Order items are editable by everyone" on public.order_items for all using (true);
 
 
+

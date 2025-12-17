@@ -98,3 +98,4 @@ WHERE NOT EXISTS (SELECT 1 FROM public.menu_items WHERE title = '${safeTitle}');
 
 run();
 
+
